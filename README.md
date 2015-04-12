@@ -3,6 +3,11 @@
 ### Platform
 Cool5 is based on node.js (and 100% compatible with io.js), so you can run it under Windows/MacOS/Unix/Linux.
 
+### Install
+```
+npm install cool5
+```
+
 ### Usage
 Start with command line arguments:
 ```
