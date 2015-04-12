@@ -1,2 +1,2 @@
-# transmit
-proxy to socks5
+# cool5
+proxy for socks5
