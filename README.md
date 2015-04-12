@@ -1,5 +1,8 @@
 # Cool5 - Build Your Socks5 Proxy Chain Easily
 
+### Platform
+Cool5 is based on node.js (and 100% compatible with io.js), so you can run it under Windows/MacOS/Unix/Linux.
+
 ### Usage
 Start with command line arguments:
 ```
