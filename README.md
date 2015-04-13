@@ -1,7 +1,7 @@
 # Cool5 - Build Your Socks5 Proxy Chain Easily
 
 ### Killer Feature
-**Lower chain latency than general product cause the usage of preconnection pool.**
+**Lower chain latency - suitable for game proxy.** 
 
 ### Platform
 Cool5 is based on node.js (and 100% compatible with io.js), so you can run it under Windows/MacOS/Unix/Linux.
