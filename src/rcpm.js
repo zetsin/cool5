@@ -2,36 +2,42 @@ var net = require('net');
 function rcpm (option, max) {
 	var self = this;
 
-	max = max || 10;
-
 	self.option = option;
-	self.max = max;
+	self.max = max || 10;
 	self.pool = [];
 
-	for(var count = 0; count < max; count++) {
+	for(var count = 0; count < self.max; count++) {
 		self.add();
 	}
 }
 rcpm.prototype.add = function () {
 	var self = this;
 
-	var socket = net.connect(self.option, function () {});
+	var socket = net.connect(self.option, function () {
+		socket.connected = true;
+		self.pool.push(socket);
+	});
 	socket.on('error', function (err) {});
 	socket.on('close', function () {
-		console.log('close');
 		var index = self.pool.indexOf(socket);
-		if(index < 0) {
-			return;
+		if(index >= 0) {
+			self.pool.splice(index, 1);
+			self.add();
+		} else if (!socket.connected) {
+			setTimeout(function () {
+				self.add();
+			}, 1000 * 60);
 		}
-		self.pool.slice(index, 1);
-		self.add();
 	});
 
-	self.pool.push(socket);
 }
 rcpm.prototype.get = function () {
-	console.log('get');
 	var self = this;
+	console.log('get: ' + self.pool.length);
+
+	if(!self.pool.length) {
+		return net.connect(self.option, function () {});
+	}
 
 	self.add();
 	return self.pool.shift();
