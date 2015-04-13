@@ -14,7 +14,7 @@ Cool5 is an optimized socks5 proxy chain server. It acts like an normal socks5 p
 
 ### Install
 
-Cool5 is based on node.js, you should install node.js and npm before you get start.
+Cool5 is based on [node.js](https://nodejs.org/), please install it before you get start. Then you can excute the command below to install cool5.
 
 ```
 npm install cool5
