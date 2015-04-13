@@ -32,3 +32,6 @@ node cool5.js -c <config-file>
   }
 }
 ```
+
+### Developer Reference
+Goto our [wiki](https://github.com/zetsingithub/cool5/wiki) page to get more details.
