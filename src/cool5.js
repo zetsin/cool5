@@ -2,6 +2,7 @@ var net = require('net');
 var os = require('os');
 var tcpm = require('./tcpm.js');
 var udpm = require('./udpm.js');
+var rcpm = require('./rcpm.js');
 
 prepare();
 
@@ -68,6 +69,7 @@ function tcpm_manager (remote_options, external_host) {
 
     self.remote_options = remote_options;
     self.external_host = external_host;
+    self.new_rcpm = new rcpm(remote_options);
     self.mappings = {}
 }
 tcpm_manager.prototype.add = function (c) {
@@ -78,9 +80,9 @@ tcpm_manager.prototype.add = function (c) {
         self.mappings[key].close();
     }
     // create tcp mapping
-    var remote_socket = net.connect(self.remote_options, function () {});
-    var _udpm = new udpm(self.remote_options.host, self.external_host);
-    self.mappings[key] = new tcpm(c, remote_socket, _udpm);
+    var remote_socket = self.new_rcpm.get();
+    var new_udpm = new udpm(self.remote_options.host, self.external_host);
+    self.mappings[key] = new tcpm(c, remote_socket, new_udpm);
     self.mappings[key].on('close', function () {
         delete self.mappings[key];
     });
