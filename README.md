@@ -1,6 +1,11 @@
-# Cool5 - Build Your Socks5 Proxy Chain Easily
+# Cool5 - Socks5 Proxy's Proxy
+
+### Intro
+
+Cool5 is an optimized socks5 proxy chain server. It acts like an normal socks5 proxy for clients but actually forwards all the traffics to next 'real' proxy server. 
 
 ### Killer Feature
+
 **Lower chain latency - suitable for game proxy.** 
 
 ### Platform
