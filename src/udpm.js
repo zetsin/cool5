@@ -103,7 +103,7 @@ udpm.prototype.reply = function (buffer, callback) {
         }
     });
 
-    self.associate.bind(self.remote_port, function () {
+    self.associate.bind(function () {
         console.log('bind');
         self.bind = true;
 
@@ -111,6 +111,7 @@ udpm.prototype.reply = function (buffer, callback) {
         buffer[5] = addr[1];
         buffer[6] = addr[2];
         buffer[7] = addr[3];
+        buffer.writeUIntBE(self.associate.address().port, 4 + 4, 2);
         callback();
     });
 
