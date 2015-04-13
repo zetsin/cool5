@@ -1,0 +1,25 @@
+{
+  "name": "cool5",
+  "version": "0.1.0",
+  "description": "Build Your Socks5 Proxy Chain Easily",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zetsingithub/cool5"
+  },
+  "keywords": [
+    "socks5"
+  ],
+  "contributors": [
+    "Jinquan Liu (https://github.com/zetsingithub)",
+    "Jianru Lin <jianru.lin@gmail.com> (https://github.com/Jianru-Lin)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zetsingithub/cool5/issues"
+  },
+  "homepage": "https://github.com/zetsingithub/cool5"
+}
