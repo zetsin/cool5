@@ -2,7 +2,7 @@
 
 ### Intro
 
-Cool5 is an optimized socks5 proxy chain server. It acts like an normal socks5 proxy for clients but actually forwards all the traffics to next 'real' proxy server. 
+Cool5 is an optimized socks5 proxy chain server. It acts like an normal socks5 proxy for clients, but actually forwards (and backwards) all the traffics between clients and backend 'real' proxy servers.
 
 ### Killer Feature
 
