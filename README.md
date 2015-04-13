@@ -4,21 +4,18 @@
 
 Cool5 is an optimized socks5 proxy chain server. It acts like an normal socks5 proxy for clients, but actually forwards (and backwards) all the traffics between clients and backend 'real' proxy servers.
 
-### Killer Feature
-
-**Lower chain latency - suitable for game proxy.** 
-
 ### Features
 
-- Optimized, lower chain latency
+- **Lower chain latency - suitable for game proxy** 
 - Reliable, verified in production environment for thousands of hours
-- Good Performance, 10000 concurrent connections is not an problem
-- Developer Friendly, with clean code and complete documents
-
-### Platform
-Cool5 is based on node.js (and 100% compatible with io.js), so you can run it under Windows/MacOS/Unix/Linux.
+- Good Performance, 10000 concurrent connections is ok
+- Developer Friendly, with good tests, clean code and complete documents
+- Cross Platform, works on Windows/OSX/Unix/Linux
 
 ### Install
+
+Cool5 is based on node.js, you should install node.js and npm before you get start.
+
 ```
 npm install cool5
 ```
