@@ -10,6 +10,7 @@ Cool5 is an optimized socks5 proxy chain server. It acts like an normal socks5 p
 
 ### Features
 
+- Optimized, lower chain latency
 - Reliable, verified in production environment for thousands of hours
 - Good Performance, 10000 concurrent connections is not an problem
 - Developer Friendly, with clean code and complete documents
