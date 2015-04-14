@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/zetsingithub/cool5",
   "dependencies": {
+    "mkdirp": "^0.5.0",
     "yargs": "^3.7.1"
   }
 }
