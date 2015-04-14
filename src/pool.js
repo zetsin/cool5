@@ -1,5 +1,5 @@
 var net = require('net');
-function rcpm (option, max) {
+function pool (option, max) {
 	var self = this;
 
 	self.option = option;
@@ -10,7 +10,7 @@ function rcpm (option, max) {
 		self.add();
 	}
 }
-rcpm.prototype.add = function () {
+pool.prototype.add = function () {
 	var self = this;
 
 	var socket = net.connect(self.option, function () {
@@ -31,7 +31,7 @@ rcpm.prototype.add = function () {
 	});
 
 }
-rcpm.prototype.get = function () {
+pool.prototype.get = function () {
 	var self = this;
 	console.log('get: ' + self.pool.length);
 
@@ -43,4 +43,4 @@ rcpm.prototype.get = function () {
 	return self.pool.shift();
 }
 
-module.exports = rcpm;
+module.exports = pool;
