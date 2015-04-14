@@ -1,1 +1,11 @@
-{}
+{
+	"pool": {
+		"enabled": true,
+		"capacity": 24,
+		"expiration": 60
+	},
+	"log": {
+		"enabled": true,
+		"directory": "./log"
+	}
+}
