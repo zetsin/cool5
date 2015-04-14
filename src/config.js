@@ -21,7 +21,7 @@ var argv = yargs
 // load user config file
 // if failed, application can not start up
 try {
-	var user_config_file = path.resolve(__dirname, argv.c)
+	var user_config_file = path.resolve(argv.c)
 	var user_config = require(user_config_file)
 }
 catch (err) {

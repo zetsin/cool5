@@ -1,9 +1,25 @@
 // current module depend on config module
 // to retrive some config value that could enable file log etc.
 
-//var config = require('./config')
+var config = require('./config')
+var mkdirp = require('mkdirp')
+var fs = require('fs')
+var path = require('path')
 
-exports.info = function(str, v) {debugger
+// create the log directory
+// if exists already, no error occurs
+
+var logconfig = config.get('log')
+if (logconfig.enabled) {
+    mkdirp(logconfig.directory, function(err) {
+        if (err) {
+            log('error', tstr('create log directory failed: ${directory}', logconfig))
+            process.exit(1)            
+        }
+    })
+}
+
+exports.info = function(str, v) {
 	var text = tstr(str, v)
 	log('info', text)
 }
@@ -27,12 +43,77 @@ exports.debug = function(str, v) {
 // it implemented all the actually work to output the
 // log info to screen or file
 function log(level, text) {
-	var str = tstr('${date} [${level|upper}] ${text}', {
-		date: new Date().toISOString(),
-		level: level,
-		text: text
-	})
-	console.log(str)
+    if (logconfig.enabled) {
+        log_file(level, text)
+        log_tty(level, text)
+    }
+    else {
+        log_tty(level, text)
+    }
+
+    function log_tty(level, text) {
+        var str = tstr('${dateTime} [${level|upper}] ${text}', {
+            dateTime: dateTimeStr(new Date()),
+            level: level,
+            text: text
+        })
+        if (level === 'error') {
+            console.error(str)
+        }
+        else {
+            console.log(str)
+        }
+    }
+
+    function log_file(level, text) {
+        var str = tstr('${dateTime} ${text}\n', {
+            dateTime: dateTimeStr(new Date()),
+            text: text
+        })
+        var filename = tstr('${date} ${level|upper}.txt', {
+            date: dateStr(new Date()),
+            level: level
+        })
+        filename = path.resolve(logconfig.directory, filename)
+        fs.appendFile(filename, str, function(err) {
+            if (!err) return
+            // well, we have to print this problem to tty
+            var warning = tstr('log module append content to file failed, filename is ${filename}, and reason is ${reason}', {
+                filename: filename, 
+                reason: err.toString()
+            })
+            log_tty('warning', warning)
+        })
+    }
+}
+
+function dateTimeStr(dateTime, local) {
+    return tstr('${date} ${time}', {
+        date: dateStr(dateTime, local),
+        time: timeStr(dateTime, local)
+    })
+}
+
+function dateStr(dateTime, local) {
+    var year = local ? dateTime.getFullYear() : dateTime.getUTCFullYear()
+    var month = (local ? dateTime.getMonth() : dateTime.getUTCMonth()) + 1
+    var date = local ? dateTime.getDate() : dateTime.getUTCDate()
+    return tstr('${year}-${month}-${date}', {
+        year: year.toString(),
+        month: month.toString(),
+        date: date.toString()
+    })
+}
+
+function timeStr(dateTime, local) {
+    var h = local ? dateTime.getHours() : dateTime.getUTCHours()
+    var m = local ? dateTime.getMinutes() : dateTime.getUTCMinutes()
+    var s = local ? dateTime.getSeconds() : dateTime.getUTCSeconds()
+    return tstr('${h}:${m}:${s}', {
+        h: h.toString(),
+        m: m.toString(),
+        s: s.toString()
+    })
 }
 
 // template string function
