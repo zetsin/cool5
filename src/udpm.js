@@ -1,16 +1,36 @@
+var config = require('./config.js');
 var dgram = require('dgram');
 
-function udpm (remote_addr, external_addr) {
+function udpm () {
     var self = this;
+
+    var remote_config = config.get('remote');
 
     self.cmd = 0;
     self.bind = false;
     self.associate = undefined;
-    self.local_port = 0;
-    self.local_addr = '';
-    self.remote_port = 0;
-    self.remote_addr = remote_addr;
-    self.external_addr = external_addr;
+    self.client = {
+    	port: 0,
+    	host: ''
+    };
+    self.remote = {
+    	port: 0,
+    	host: remote_config.host
+    };
+    self.external_host = get_external_host();
+
+    function get_external_host () {
+        var list = require('os').networkInterfaces()
+        for(var key1 in list) {
+            for(var key2 in list[key1]) {
+                var info = list[key1][key2];
+                if(info.family === 'IPv4' && info.internal === false && info.address !== '127.0.0.1') {
+                    return info.address;
+                }
+            }
+        }
+        return '0.0.0.0';
+    }
 }
 // +----+-----+-------+------+----------+----------+
 // |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
@@ -60,15 +80,15 @@ udpm.prototype.reply = function (buffer, callback) {
     }
     if(buffer[3] === 0x01 && buffer.length === 4 + 4 + 2) {
         if(buffer.readUIntBE(4, 4) !== 0x00) {
-            self.remote_addr = buffer[4] + '.' + buffer[5] + '.' + buffer[6] + '.' + buffer[7];
+            self.remote.host = buffer[4] + '.' + buffer[5] + '.' + buffer[6] + '.' + buffer[7];
         }
-        self.remote_port = buffer.readUIntBE(4 + 4, 2);
+        self.remote.port = buffer.readUIntBE(4 + 4, 2);
     } else {
         callback();
         return;
     }
 
-    var addr = self.external_addr.split('.');
+    var addr = self.external_host.split('.');
     if(addr.length !== 4) {
         callback();
         return;
@@ -85,18 +105,18 @@ udpm.prototype.reply = function (buffer, callback) {
 
     self.associate.on("message", function (msg, rinfo) {
         console.log(rinfo)
-        if(rinfo.port === self.remote_port && rinfo.address === self.remote_addr) {
+        if(rinfo.port === self.remote.port && rinfo.address === self.remote.host) {
             console.log('receive')
-            self.associate.send(msg, 0, msg.length, self.local_port, self.local_addr);
+            self.associate.send(msg, 0, msg.length, self.client.port, self.client.host);
         } else {
-            if(!self.local_port || !self.local_addr) {
-                self.local_port = rinfo.port;
-                self.local_addr = rinfo.address;
-                console.log('no local addr')
+            if(!self.client.port || !self.client.host) {
+                self.client.port = rinfo.port;
+                self.client.host = rinfo.address;
+                console.log('no client addr')
             }
             console.log('send')
-            if(rinfo.port === self.local_port && rinfo.address === self.local_addr) {
-                self.associate.send(msg, 0, msg.length, self.remote_port, self.remote_addr);
+            if(rinfo.port === self.client.port && rinfo.address === self.client.host) {
+                self.associate.send(msg, 0, msg.length, self.remote.port, self.remote.host);
             } else {
                 console.log("associate msg from unknown addr!");
             }

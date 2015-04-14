@@ -1,4 +1,8 @@
 {
+	"local": {
+		"port": 1080,
+		"host": "0.0.0.0"
+	},
 	"pool": {
 		"enabled": true,
 		"capacity": 24,
