@@ -122,6 +122,12 @@ function timeStr(dateTime, local) {
 //     -> http://www.target.com:8080/index.html
 function tstr(str, data, option) {
 
+    // data can be null or undefined
+    // we just treat it as an empty object
+    if (data === undefined || data === null) {
+        data = {}
+    }
+
     checkArgs()
     init()
     return level_0(str, data2f(data))
@@ -170,7 +176,9 @@ function tstr(str, data, option) {
         
         function queryValue(expText) {
             filterExp = parseFilterExpression(expText)
-            return executeFilterExpression(filterExp)
+            var value = executeFilterExpression(filterExp)
+            // convert value to string
+            return value === null || value === undefined ? '' : (value + '')
 
             function parseFilterExpression(expText) {
                 // split by |
