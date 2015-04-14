@@ -20,22 +20,22 @@ if (logconfig.enabled) {
 }
 
 exports.info = function(str, v) {
-	var text = tstr(str, v)
+	var text = tstr(str, v || {})
 	log('info', text)
 }
 
 exports.warning = function(str, v) {
-	var text = tstr(str, v)
+	var text = tstr(str, v || {})
 	log('warning', text)
 }
 
 exports.error = function(str, v) {
-	var text = tstr(str, v)
+	var text = tstr(str, v || {})
 	log('error', text)
 }
 
 exports.debug = function(str, v) {
-	var text = tstr(str, v)
+	var text = tstr(str, v || {})
 	log('debug', text)
 }
 
