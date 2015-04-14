@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/zetsingithub/cool5/issues"
   },
-  "homepage": "https://github.com/zetsingithub/cool5"
+  "homepage": "https://github.com/zetsingithub/cool5",
+  "dependencies": {
+    "yargs": "^3.7.1"
+  }
 }
