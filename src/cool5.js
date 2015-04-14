@@ -3,7 +3,6 @@
 // remote -> {host: <string>, port: <number>}
 
 var net = require('net');
-var os = require('os');
 var config = require('./config.js');
 var log = require('./log.js');
 var tcpm = require('./tcpm.js');
@@ -16,17 +15,26 @@ start();
 function start () {
 
     // create tcp connection manager
-    var new_tcpm_manager = new tcpm_manager();
+    var new_tcpm_manager;
     // create server
     var local_config = config.get('local');
-    net.createServer(function(c) {
-        new_tcpm_manager.add(c);
-    }).on('error', function () {
-
-    }).on('close', function () {
-        new_tcpm_manager.close();
-    }).listen(local_config, function() {
-
+    var server = net.createServer(function(client) {
+        log.info('#cool# client connected from ${remoteAddress}:${remotePort}', client);
+        if(new_tcpm_manager) {
+            new_tcpm_manager.add(client);
+        }
+    });
+    server.on('error', function (err) {
+        log.error('#cool# server had error: ${syscall} ${errno} ${address}:${port}', err);
+        server.close();
+    })
+    server.on('close', function () {
+        log.info('#cool# server closed');
+        process.exit(1)
+    });
+    server.listen(local_config, function() {
+        log.info('#cool# server opened on ${address}:${port}', server.address());
+        new_tcpm_manager = new tcpm_manager();
     });
 }
 
@@ -51,10 +59,4 @@ tcpm_manager.prototype.add = function (client_socket) {
     self.mappings[key].on('close', function () {
         delete self.mappings[key];
     });
-}
-tcpm_manager.prototype.close = function () {
-    var self = this;
-    for(var key in self.mappings) {
-        self.mappings[key].close();
-    }
 }

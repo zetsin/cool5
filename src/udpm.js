@@ -1,4 +1,5 @@
 var config = require('./config.js');
+var log = require('./log.js');
 var dgram = require('dgram');
 
 function udpm () {
@@ -56,9 +57,8 @@ udpm.prototype.request = function (buffer) {
         (buffer[3] === 0x04 && buffer.length === 4 + 16 + 2) ||
         (buffer[3] === 0x03 && buffer.length === 4 + 1 + buffer[4] + 2)) {
         self.cmd = buffer[1];
+        log.info('#udpm# request cmd=' + self.cmd);
         if(self.cmd === 0x03) {
-            console.log('udp request');
-            console.log(buffer);
             buffer.fill(0, 4);
         }
     }
@@ -97,34 +97,30 @@ udpm.prototype.reply = function (buffer, callback) {
     self.associate = dgram.createSocket("udp4");
 
     self.associate.on("error", function (err) {
-        console.log("associate error:\n" + err.stack);
+        log.error('#udpm# socket error: ${syscall} ${errno} ${address}:${port}', err);
         if(err.syscall === 'bind') {
         	callback();
         }
     });
 
     self.associate.on("message", function (msg, rinfo) {
-        console.log(rinfo)
         if(rinfo.port === self.remote.port && rinfo.address === self.remote.host) {
-            console.log('receive')
             self.associate.send(msg, 0, msg.length, self.client.port, self.client.host);
         } else {
             if(!self.client.port || !self.client.host) {
                 self.client.port = rinfo.port;
                 self.client.host = rinfo.address;
-                console.log('no client addr')
             }
-            console.log('send')
             if(rinfo.port === self.client.port && rinfo.address === self.client.host) {
                 self.associate.send(msg, 0, msg.length, self.remote.port, self.remote.host);
             } else {
-                console.log("associate msg from unknown addr!");
+        		log.error('#udpm# receive msg from unknown addr: ${address}:${port}', rinfo);
             }
         }
     });
 
     self.associate.bind(function () {
-        console.log('bind');
+        log.info('#udpm# socket bind: ${address}:${port}', self.associate.address());
         self.bind = true;
 
         buffer[4] = addr[0];

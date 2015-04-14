@@ -1,4 +1,5 @@
 var config = require('./config.js');
+var log = require('./log.js');
 var net = require('net');
 function pool () {
 	var self = this;
@@ -6,6 +7,7 @@ function pool () {
 	self.remote_config = config.get('remote');
 	self.pool_config = config.get('pool');
 	self.connections = [];
+	log.info('#pool# config: enabled=${enabled}, capacity=${capacity}, expiration=${expiration}', self.pool_config);
 
 	if(!self.pool_config.enabled) {
 		return;
@@ -22,8 +24,14 @@ pool.prototype.add = function () {
 		socket.connected = true;
 		self.connections.push(socket);
 	});
-	socket.on('error', function (err) {});
+	socket.on('error', function (err) {
+		log.error('#pool# socket error: ${syscall} ${errno}', err);
+	});
 	socket.on('close', function () {
+		log.info('#pool# socket close');
+		if(self.closed) {
+			return;
+		}
 		var index = self.connections.indexOf(socket);
 		if(index >= 0) {
 			self.connections.splice(index, 1);
@@ -38,7 +46,7 @@ pool.prototype.add = function () {
 }
 pool.prototype.get = function () {
 	var self = this;
-	console.log('get: ' + self.connections.length);
+	log.info('#pool# get a connection, total: ' + self.connections.length);
 
 	if(!self.connections.length) {
 		return net.connect(self.remote_config, function () {});
