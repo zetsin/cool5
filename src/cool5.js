@@ -1,5 +1,11 @@
+// [config]
+// local  -> {host: <string>, port: <number>}
+// remote -> {host: <string>, port: <number>}
+
 var net = require('net');
 var os = require('os');
+var config = require('./config.js');
+var log = require('./log.js');
 var tcpm = require('./tcpm.js');
 var udpm = require('./udpm.js');
 var pool = require('./pool.js');
