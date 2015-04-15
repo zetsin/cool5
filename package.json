@@ -1,8 +1,8 @@
 {
   "name": "cool5",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Socks5 Proxy's Proxy",
-  "main": "index.js",
+  "main": "src/cool5.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
