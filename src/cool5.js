@@ -58,5 +58,3 @@ tcpm_manager.prototype.add = function (client_socket) {
         delete self.mappings[key];
     });
 }
-
-exports.start = start
