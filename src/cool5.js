@@ -9,8 +9,6 @@ var tcpm = require('./tcpm.js');
 var udpm = require('./udpm.js');
 var pool = require('./pool.js');
 
-start();
-
 // 【函数】启动
 function start () {
 
@@ -60,3 +58,5 @@ tcpm_manager.prototype.add = function (client_socket) {
         delete self.mappings[key];
     });
 }
+
+module.exports = start;
