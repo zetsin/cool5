@@ -30,7 +30,7 @@ exports.start = function () {
         log.info('#cool# server closed');
         process.exit(1)
     });
-    server.listen(local_config, function() {
+    server.listen(local_config.port, local_config.host, function() {
         log.info('#cool# server opened on ${address}:${port}', server.address());
         new_tcpm_manager = new tcpm_manager();
     });

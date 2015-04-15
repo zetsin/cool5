@@ -1,6 +1,5 @@
 {
   "name": "cool5",
-  "version": "1.0.2",
   "description": "Socks5 Proxy's Proxy",
   "main": "src/cool5.js",
   "bin": {
