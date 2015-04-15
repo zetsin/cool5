@@ -9,10 +9,8 @@ var tcpm = require('./tcpm.js');
 var udpm = require('./udpm.js');
 var pool = require('./pool.js');
 
-start();
-
 // 【函数】启动
-function start () {
+exports.start = function () {
 
     // create tcp connection manager
     var new_tcpm_manager;
