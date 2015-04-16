@@ -2,11 +2,15 @@
 // sts -> server tcp socket
 // us -> udp socket
 
-function tunnel(c_host, c_port) {
+function tunnel() {
 
 }
 
 // client tcp socket
+
+tunnel.prototype.cts_connect = function(c_host, c_port) {
+	
+}
 
 tunnel.prototype.cts_data = function(buff) {
 
