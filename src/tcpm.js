@@ -1,6 +1,4 @@
 var net = require('net');
-var util = require ("util");
-var events = require ('events');
 var log = require('./log.js');
 
 function tcpm (client_socket, remote_socket, udpm) {
@@ -38,16 +36,19 @@ function tcpm (client_socket, remote_socket, udpm) {
     });
 
     self.client_socket.on('data', function (buffer) {
+    	log.info('#tcpm# client socket data');
+    	console.log(buffer);
         self.udpm.request(buffer);
         self.remote_socket.write(buffer);
     });
     self.remote_socket.on('data', function (buffer) {
+    	log.info('#tcpm# remote socket data');
+    	console.log(buffer);
         self.udpm.reply(buffer, function () {
             self.client_socket.write(buffer);
         });
     });
 }
-util.inherits(tcpm, events.EventEmitter);
 tcpm.prototype.close = function () {
     var self = this;
 
@@ -59,7 +60,6 @@ tcpm.prototype.close = function () {
     self.client_socket.end();
     self.remote_socket.end();
     self.udpm.close();
-    self.emit('close');
 }
 
 module.exports = tcpm;

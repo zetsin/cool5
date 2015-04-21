@@ -1,6 +1,9 @@
 var config = require('./config.js');
 var log = require('./log.js');
+var connection = require('./connection.js');
 var net = require('net');
+
+
 function pool () {
 	var self = this;
 
@@ -14,46 +17,54 @@ function pool () {
 	}
 
 	for(var count = 0; count < self.pool_config.capacity; count++) {
-		self.add();
+		self.inject();
 	}
 }
-pool.prototype.add = function () {
+pool.prototype.inject = function () {
 	var self = this;
 
-	var socket = net.connect(self.remote_config, function () {
-		socket.connected = true;
-		self.connections.push(socket);
+	var new_connection = new connection();
+	var remote_socket = net.connect(self.remote_config, function () {
+		remote_socket.connected = true;
+		self.connections.push(new_connection);
 	});
-	socket.on('error', function (err) {
-		log.error('#pool# socket error: ${syscall} ${errno}', err);
+	new_connection.set_remote(remote_socket);
+	remote_socket.emit('create', self.remote_config);
+	remote_socket.on('error', function (err) {
+		log.error('#pool# remote_socket error: ${syscall} ${errno}', err);
 	});
-	socket.on('close', function () {
-		log.info('#pool# socket close');
+	remote_socket.on('close', function () {
+		log.info('#pool# remote_socket close');
 		if(self.closed) {
 			return;
 		}
-		var index = self.connections.indexOf(socket);
+		var index = self.connections.indexOf(remote_socket);
 		if(index >= 0) {
 			self.connections.splice(index, 1);
-			self.add();
-		} else if (!socket.connected) {
+			self.inject();
+		} else if (!remote_socket.connected) {
 			setTimeout(function () {
-				self.add();
+				self.inject();
 			}, 1000 * self.pool_config.expiration);
 		}
 	});
-
 }
-pool.prototype.get = function () {
+pool.prototype.fetch = function (client_socket) {
 	var self = this;
 	log.info('#pool# get a connection, total: ' + self.connections.length);
 
+	var new_connection
 	if(!self.connections.length) {
-		return net.connect(self.remote_config, function () {});
+		new_connection = new connection();
+		var remote_socket = net.connect(self.remote_config);
+		remote_socket.emit('create', self.remote_config);
+		new_connection.set_remote(remote_socket);
+	} else {
+		self.inject();
+		new_connection = self.connections.shift();
 	}
-
-	self.add();
-	return self.connections.shift();
+	new_connection.set_client(client_socket);
+	new_connection.go();
 }
 
 module.exports = pool;

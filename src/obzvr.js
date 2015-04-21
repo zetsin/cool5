@@ -8,7 +8,7 @@ function tunnel() {
 
 // client tcp socket
 
-tunnel.prototype.cts_connect = function(c_host, c_port) {
+tunnel.prototype.cts_connect = function(info) {
 	
 }
 
@@ -38,11 +38,11 @@ tunnel.prototype.cts_close = function() {
 
 // server tcp socket
 
-tunnel.prototype.sts_create = function(s_host, s_port) {
+tunnel.prototype.sts_create = function() {
 
 }
 
-tunnel.prototype.sts_connect = function() {
+tunnel.prototype.sts_connect = function(info) {
 
 }
 
@@ -72,11 +72,11 @@ tunnel.prototype.sts_close = function() {
 
 // client+server udp socket
 
-tunnel.prototype.csus_create = function(host, port) {
+tunnel.prototype.csus_create = function() {
 	
 }
 
-tunnel.prototype.csus_listening = function() {
+tunnel.prototype.csus_listening = function(info) {
 	
 }
 

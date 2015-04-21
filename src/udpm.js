@@ -1,5 +1,7 @@
 var config = require('./config.js');
 var log = require('./log.js');
+var events = require('events');
+var util = require ('util');
 var dgram = require('dgram');
 
 function udpm () {
@@ -9,7 +11,7 @@ function udpm () {
 
     self.cmd = 0;
     self.bind = false;
-    self.associate = undefined;
+    self.associate = dgram.createSocket('udp4');
     self.client = {
     	port: 0,
     	host: ''
@@ -33,6 +35,7 @@ function udpm () {
         return '0.0.0.0';
     }
 }
+util.inherits(udpm, events.EventEmitter);
 // +----+-----+-------+------+----------+----------+
 // |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
 // +----+-----+-------+------+----------+----------+
@@ -94,18 +97,24 @@ udpm.prototype.reply = function (buffer, callback) {
         return;
     }
 
-    self.associate = dgram.createSocket("udp4");
+    self.emit('create');
 
-    self.associate.on("error", function (err) {
+    self.associate.on('error', function (err) {
         log.error('#udpm# socket error: ${syscall} ${errno} ${address}:${port}', err);
         if(err.syscall === 'bind') {
         	callback();
         }
+    	self.emit('error', err);
     });
 
-    self.associate.on("message", function (msg, rinfo) {
+    self.associate.on('close', function () {
+    	self.emit('close');
+    });
+
+    self.associate.on('message', function (msg, rinfo) {
         if(rinfo.port === self.remote.port && rinfo.address === self.remote.host) {
             self.associate.send(msg, 0, msg.length, self.client.port, self.client.host);
+            self.emit('send', msg, 0, msg.length, self.client.port, self.client.host);
         } else {
             if(!self.client.port || !self.client.host) {
                 self.client.port = rinfo.port;
@@ -113,10 +122,12 @@ udpm.prototype.reply = function (buffer, callback) {
             }
             if(rinfo.port === self.client.port && rinfo.address === self.client.host) {
                 self.associate.send(msg, 0, msg.length, self.remote.port, self.remote.host);
+            	self.emit('send', msg, 0, msg.length, self.remote.port, self.remote.host);
             } else {
         		log.error('#udpm# receive msg from unknown addr: ${address}:${port}', rinfo);
             }
         }
+        self.emit('message', msg, rinfo);
     });
 
     self.associate.bind(function () {
@@ -129,6 +140,7 @@ udpm.prototype.reply = function (buffer, callback) {
         buffer[7] = addr[3];
         buffer.writeUIntBE(self.associate.address().port, 4 + 4, 2);
         callback();
+        self.emit('listening');
     });
 
 }
