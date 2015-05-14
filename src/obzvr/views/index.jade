@@ -20,15 +20,25 @@ block bodyex
 					th(rowspan='2') createDateTime
 					th(colspan='5') client
 					th(colspan='5') server
+					th(colspan='7') udp
 				tr
 					th status
 					th error
 					th connectDateTime
 					th remoteAddress
 					th remotePort
+
 					th status
 					th error
 					th connectDateTime
+					th remoteAddress
+					th remotePort
+
+					th status
+					th error
+					th createDateTime
+					th localAddress
+					th localPort
 					th remoteAddress
 					th remotePort
 			tbody
@@ -37,16 +47,26 @@ block bodyex
 						td= tunnel.id
 						td= tunnel.type
 						td= tunnel.createDateTime
+
 						td= tunnel.client.status
 						td= tunnel.client.error
 						td= tunnel.client.connectDateTime
 						td= tunnel.client.remoteAddress
 						td= tunnel.client.remotePort
+
 						td= tunnel.server.status
 						td= tunnel.server.error
 						td= tunnel.server.connectDateTime
 						td= tunnel.server.remoteAddress
 						td= tunnel.server.remotePort
+
+						td= tunnel.udp.status
+						td= tunnel.udp.error
+						td= tunnel.udp.createDateTime
+						td= tunnel.udp.localAddress
+						td= tunnel.udp.localPort
+						td= tunnel.udp.remoteAddress
+						td= tunnel.udp.remotePort
 
 	else
 		p tunnel list is empty

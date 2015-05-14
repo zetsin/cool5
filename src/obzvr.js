@@ -44,6 +44,15 @@ function tunnel() {
 			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
+		},
+		udp: {
+			createDateTime: undefined,
+			status: undefined,				// listening|close
+			error: undefined,
+			remoteAddress: undefined,
+			remotePort: undefined,
+			localAddress: undefined,
+			localPort: undefined,
 		}
 	}
 
@@ -127,11 +136,12 @@ tunnel.prototype.sts_close = function() {
 // client+server udp socket
 
 tunnel.prototype.csus_create = function() {
-	
+	this.data.udp.createDateTime = new Date().toString()
+	this.data.type = 'udp'
 }
 
 tunnel.prototype.csus_listening = function(info) {
-	
+	this.data.udp.status = 'listening'
 }
 
 tunnel.prototype.csus_send = function(buf, offset, length, port, host) {
@@ -143,11 +153,11 @@ tunnel.prototype.csus_message = function(buff, rinfo) {
 }
 
 tunnel.prototype.csus_error = function(err) {
-	
+	this.data.udp.error = err.toString()
 }
 
 tunnel.prototype.csus_close = function() {
-	
+	this.data.udp.status = 'close'
 }
 
 exports.tunnel = tunnel
