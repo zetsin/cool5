@@ -1,7 +1,7 @@
 var config = require('./config')
 
 var data = {
-	startDateTime: new Date().toString(),
+	startDateTime: currentDateTime(),
 	// tunnel - {id: '', type: '', createDateTime: '', client: {} || null, server: {} || null}
 	// tunnel.type - 'unknown' | 'tcp' | 'udp'
 	// tunnel.client - {host: '', port: 123, eventHistory: []}
@@ -25,7 +25,7 @@ if (obzvr_config.enabled) {
 function tunnel() {
 	this.data = {
 		id: data.tunnelList.length,
-		createDateTime: new Date().toString(),
+		createDateTime: currentDateTime(),
 		type: 'unknown',
 		client: {
 			status: undefined,				// connect|close
@@ -63,7 +63,7 @@ function tunnel() {
 
 tunnel.prototype.cts_connect = function(info) {
 	this.data.client.status = 'connect'
-	this.data.client.connectDateTime = new Date().toString()
+	this.data.client.connectDateTime = currentDateTime()
 	this.data.client.remoteAddress = info.remoteAddress,
 	this.data.client.remotePort = info.remotePort
 	this.data.client.localAddress = info.localAddress
@@ -102,7 +102,7 @@ tunnel.prototype.sts_create = function() {
 
 tunnel.prototype.sts_connect = function(info) {
 	this.data.server.status = 'connect'
-	this.data.server.connectDateTime = new Date().toString()
+	this.data.server.connectDateTime = currentDateTime()
 	this.data.server.remoteAddress = info.remoteAddress,
 	this.data.server.remotePort = info.remotePort
 	this.data.server.localAddress = info.localAddress
@@ -136,7 +136,7 @@ tunnel.prototype.sts_close = function() {
 // client+server udp socket
 
 tunnel.prototype.csus_create = function() {
-	this.data.udp.createDateTime = new Date().toString()
+	this.data.udp.createDateTime = currentDateTime()
 	this.data.type = 'udp'
 }
 
@@ -158,6 +158,12 @@ tunnel.prototype.csus_error = function(err) {
 
 tunnel.prototype.csus_close = function() {
 	this.data.udp.status = 'close'
+}
+
+// utils
+
+function currentDateTime() {
+	return new Date().toISOString()
 }
 
 exports.tunnel = tunnel
