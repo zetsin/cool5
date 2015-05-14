@@ -27,8 +27,24 @@ function tunnel() {
 		id: data.tunnelList.length,
 		createDateTime: new Date().toString(),
 		type: 'unknown',
-		client: null,
-		server: null
+		client: {
+			status: undefined,				// connect|close
+			error: undefined,
+			connectDateTime: undefined,
+			remoteAddress: undefined,
+			remotePort: undefined,
+			localAddress: undefined,
+			localPort: undefined,
+		},
+		server: {
+			status: undefined,				// connect|close
+			error: undefined,
+			connectDateTime: undefined,
+			remoteAddress: undefined,
+			remotePort: undefined,
+			localAddress: undefined,
+			localPort: undefined,
+		}
 	}
 
 	data.tunnelList.push(this.data)
@@ -37,13 +53,12 @@ function tunnel() {
 // client tcp socket
 
 tunnel.prototype.cts_connect = function(info) {
-	this.data.client = {
-		connectDateTime: new Date().toString(),
-		remoteAddress: info.remoteAddress, 
-		remotePort: info.remotePort,
-		localAddress: info.localAddress,
-		localPort: info.localPort
-	}
+	this.data.client.status = 'connect'
+	this.data.client.connectDateTime = new Date().toString()
+	this.data.client.remoteAddress = info.remoteAddress,
+	this.data.client.remotePort = info.remotePort
+	this.data.client.localAddress = info.localAddress
+	this.data.client.localPort = info.localPort
 }
 
 tunnel.prototype.cts_data = function(buff) {
@@ -63,11 +78,11 @@ tunnel.prototype.cts_timeout = function() {
 }
 
 tunnel.prototype.cts_error = function(err) {
-
+	this.data.client.error = err.toString()
 }
 
 tunnel.prototype.cts_close = function() {
-
+	this.data.client.status = 'close'
 }
 
 // server tcp socket
@@ -77,13 +92,12 @@ tunnel.prototype.sts_create = function() {
 }
 
 tunnel.prototype.sts_connect = function(info) {
-	this.data.server = {
-		connectDateTime: new Date().toString(),
-		remoteAddress: info.remoteAddress, 
-		remotePort: info.remotePort,
-		localAddress: info.localAddress,
-		localPort: info.localPort
-	}
+	this.data.server.status = 'connect'
+	this.data.server.connectDateTime = new Date().toString()
+	this.data.server.remoteAddress = info.remoteAddress,
+	this.data.server.remotePort = info.remotePort
+	this.data.server.localAddress = info.localAddress
+	this.data.server.localPort = info.localPort
 }
 
 tunnel.prototype.sts_write = function(buff) {
@@ -103,11 +117,11 @@ tunnel.prototype.sts_data = function(buff) {
 }
 
 tunnel.prototype.sts_error = function(err) {
-
+	this.data.server.error = err.toString()
 }
 
 tunnel.prototype.sts_close = function() {
-
+	this.data.server.status = 'close'
 }
 
 // client+server udp socket

@@ -18,12 +18,16 @@ block bodyex
 					th(rowspan='2') id
 					th(rowspan='2') type
 					th(rowspan='2') createDateTime
-					th(colspan='3') client
-					th(colspan='3') server
+					th(colspan='5') client
+					th(colspan='5') server
 				tr
+					th status
+					th error
 					th connectDateTime
 					th remoteAddress
 					th remotePort
+					th status
+					th error
 					th connectDateTime
 					th remoteAddress
 					th remotePort
@@ -33,12 +37,16 @@ block bodyex
 						td= tunnel.id
 						td= tunnel.type
 						td= tunnel.createDateTime
-						td= !tunnel.client ? '' : tunnel.client.connectDateTime
-						td= !tunnel.client ? '' : tunnel.client.remoteAddress
-						td= !tunnel.client ? '' : tunnel.client.remotePort
-						td= !tunnel.server ? '' : tunnel.server.connectDateTime
-						td= !tunnel.server ? '' : tunnel.server.remoteAddress
-						td= !tunnel.server ? '' : tunnel.server.remotePort
+						td= tunnel.client.status
+						td= tunnel.client.error
+						td= tunnel.client.connectDateTime
+						td= tunnel.client.remoteAddress
+						td= tunnel.client.remotePort
+						td= tunnel.server.status
+						td= tunnel.server.error
+						td= tunnel.server.connectDateTime
+						td= tunnel.server.remoteAddress
+						td= tunnel.server.remotePort
 
 	else
 		p tunnel list is empty
