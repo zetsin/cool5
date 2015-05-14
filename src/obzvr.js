@@ -1,3 +1,20 @@
+var config = require('./config')
+
+var data = {
+	summary: {
+		startDateTime: new Date().toString()
+	}
+}
+
+var obzvr_config = config.get('obzvr')
+if (obzvr_config.enabled) {
+	var web = require('./obzvr/web')
+	var obzvr_data = require('./obzvr/obzvr_data')
+	obzvr_data.get = function(name) {
+		return data[name]
+	}
+}
+
 // cts -> client tcp socket
 // sts -> server tcp socket
 // us -> udp socket

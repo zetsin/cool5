@@ -11,5 +11,10 @@
 	"log": {
 		"enabled": true,
 		"directory": "./log"
+	},
+	"obzvr": {
+		"enabled": true,
+		"host": "127.0.0.1",
+		"port": 29988
 	}
 }

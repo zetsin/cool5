@@ -37,13 +37,11 @@ function tcpm (client_socket, remote_socket, udpm) {
 
     self.client_socket.on('data', function (buffer) {
     	log.info('#tcpm# client socket data');
-    	console.log(buffer);
         self.udpm.request(buffer);
         self.remote_socket.write(buffer);
     });
     self.remote_socket.on('data', function (buffer) {
     	log.info('#tcpm# remote socket data');
-    	console.log(buffer);
         self.udpm.reply(buffer, function () {
             self.client_socket.write(buffer);
         });
