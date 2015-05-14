@@ -1,17 +1,20 @@
 var config = require('./config')
 
 var data = {
-	summary: {
-		startDateTime: new Date().toString()
-	}
+	startDateTime: new Date().toString(),
+	// tunnel - {id: '', type: '', createDateTime: '', client: {} || null, server: {} || null}
+	// tunnel.type - 'unknown' | 'tcp' | 'udp'
+	// tunnel.client - {host: '', port: 123, eventHistory: []}
+	// tunnel.client.eventHistory[i] - {type: ''}
+	tunnelList: []
 }
 
 var obzvr_config = config.get('obzvr')
 if (obzvr_config.enabled) {
 	var web = require('./obzvr/web')
 	var obzvr_data = require('./obzvr/obzvr_data')
-	obzvr_data.get = function(name) {
-		return data[name]
+	obzvr_data.get = function() {
+		return data
 	}
 }
 
@@ -20,7 +23,15 @@ if (obzvr_config.enabled) {
 // us -> udp socket
 
 function tunnel() {
+	this.data = {
+		id: data.tunnelList.length,
+		createDateTime: new Date().toString(),
+		type: 'unknown',
+		client: null,
+		server: null
+	}
 
+	data.tunnelList.push(this.data)
 }
 
 // client tcp socket

@@ -7,4 +7,27 @@ block headex
 
 block bodyex
 	h1 Cool5 Obzvr
-	p= startDateTime
+	p
+		strong start date time: 
+		span= startDateTime
+	strong tunnel list
+	if tunnelList.length > 0
+		table(border='1')
+			thead
+				tr
+					th id
+					th type
+					th createDateTime
+					th client
+					th server
+			tbody
+				each tunnel in tunnelList
+					tr
+						td= tunnel.id
+						td= tunnel.type
+						td= tunnel.createDateTime
+						td= !tunnel.client ? 'null' : 'client'
+						td= !tunnel.server ? 'null' : 'server'
+
+	else
+		p tunnel list is empty

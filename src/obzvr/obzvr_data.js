@@ -1,3 +1,3 @@
-exports.get = function(name) {
+exports.get = function() {
 	// this function will be replaced dynamically
 }
