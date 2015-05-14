@@ -15,19 +15,30 @@ block bodyex
 		table(border='1')
 			thead
 				tr
-					th id
-					th type
-					th createDateTime
-					th client
-					th server
+					th(rowspan='2') id
+					th(rowspan='2') type
+					th(rowspan='2') createDateTime
+					th(colspan='3') client
+					th(colspan='3') server
+				tr
+					th connectDateTime
+					th remoteAddress
+					th remotePort
+					th connectDateTime
+					th remoteAddress
+					th remotePort
 			tbody
 				each tunnel in tunnelList
 					tr
 						td= tunnel.id
 						td= tunnel.type
 						td= tunnel.createDateTime
-						td= !tunnel.client ? 'null' : 'client'
-						td= !tunnel.server ? 'null' : 'server'
+						td= !tunnel.client ? '' : tunnel.client.connectDateTime
+						td= !tunnel.client ? '' : tunnel.client.remoteAddress
+						td= !tunnel.client ? '' : tunnel.client.remotePort
+						td= !tunnel.server ? '' : tunnel.server.connectDateTime
+						td= !tunnel.server ? '' : tunnel.server.remoteAddress
+						td= !tunnel.server ? '' : tunnel.server.remotePort
 
 	else
 		p tunnel list is empty

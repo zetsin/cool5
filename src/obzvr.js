@@ -37,7 +37,13 @@ function tunnel() {
 // client tcp socket
 
 tunnel.prototype.cts_connect = function(info) {
-	
+	this.data.client = {
+		connectDateTime: new Date().toString(),
+		remoteAddress: info.remoteAddress, 
+		remotePort: info.remotePort,
+		localAddress: info.localAddress,
+		localPort: info.localPort
+	}
 }
 
 tunnel.prototype.cts_data = function(buff) {
@@ -67,11 +73,17 @@ tunnel.prototype.cts_close = function() {
 // server tcp socket
 
 tunnel.prototype.sts_create = function() {
-
+	// TODO not invoked
 }
 
 tunnel.prototype.sts_connect = function(info) {
-
+	this.data.server = {
+		connectDateTime: new Date().toString(),
+		remoteAddress: info.remoteAddress, 
+		remotePort: info.remotePort,
+		localAddress: info.localAddress,
+		localPort: info.localPort
+	}
 }
 
 tunnel.prototype.sts_write = function(buff) {
