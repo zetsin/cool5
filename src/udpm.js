@@ -113,16 +113,18 @@ udpm.prototype.reply = function (buffer, callback) {
 
     self.associate.on('message', function (msg, rinfo) {
         if(rinfo.port === self.remote.port && rinfo.address === self.remote.host) {
-            self.associate.send(msg, 0, msg.length, self.client.port, self.client.host);
-            self.emit('send', msg, 0, msg.length, self.client.port, self.client.host);
+            self.associate.send(msg, 0, msg.length, self.client.port, self.client.host, function (err) {
+                self.emit('send', msg, 0, msg.length, self.client.port, self.client.host);
+            });
         } else {
             if(!self.client.port || !self.client.host) {
                 self.client.port = rinfo.port;
                 self.client.host = rinfo.address;
             }
             if(rinfo.port === self.client.port && rinfo.address === self.client.host) {
-                self.associate.send(msg, 0, msg.length, self.remote.port, self.remote.host);
-            	self.emit('send', msg, 0, msg.length, self.remote.port, self.remote.host);
+                self.associate.send(msg, 0, msg.length, self.remote.port, self.remote.host, function (err) {
+                    self.emit('send', msg, 0, msg.length, self.remote.port, self.remote.host);
+                });
             } else {
         		log.error('#udpm# receive msg from unknown addr: ${address}:${port}', rinfo);
             }
