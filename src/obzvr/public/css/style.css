@@ -1,3 +1,16 @@
 body {
 	padding: 20px;
 }
+
+table * {
+	white-space: nowrap;
+	padding: 2px 4px;
+}
+
+table th {
+	text-align: center;
+}
+
+table tr:nth-child(odd) td {
+	background: rgb(239, 247, 255);
+}
