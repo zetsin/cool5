@@ -35,8 +35,8 @@ function tunnel() {
 			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
-			dataInput: 0,
-			dataOutput: 0
+			dataRead: 0,
+			dataWrite: 0
 		},
 		server: {
 			status: undefined,				// connect|close
@@ -47,19 +47,17 @@ function tunnel() {
 			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
-			dataInput: 0,
-			dataOutput: 0
+			dataRead: 0,
+			dataWrite: 0
 		},
 		udp: {
 			createDateTime: undefined,
 			status: undefined,				// listening|close
 			error: undefined,
-			remoteAddress: undefined,
-			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
-			packetInput: 0,
-			packetOutput: 0
+			packetHistory: undefined,
+			packetHistorySummary: undefined
 		}
 	}
 
@@ -78,11 +76,11 @@ tunnel.prototype.cts_connect = function(info) {
 }
 
 tunnel.prototype.cts_data = function(buff) {
-	this.data.client.dataInput += buff.length
+	this.data.client.dataRead += buff.length
 }
 
 tunnel.prototype.cts_write = function(buff) {
-	this.data.client.dataOutput += buff.length
+	this.data.client.dataWrite += buff.length
 }
 
 tunnel.prototype.cts_drain = function() {
@@ -124,7 +122,7 @@ tunnel.prototype.sts_connect = function(info) {
 }
 
 tunnel.prototype.sts_write = function(buff) {
-	this.data.server.dataOutput += buff.length
+	this.data.server.dataWrite += buff.length
 }
 
 tunnel.prototype.sts_drain = function() {
@@ -136,7 +134,7 @@ tunnel.prototype.sts_timeout = function() {
 }
 
 tunnel.prototype.sts_data = function(buff) {
-	this.data.server.dataInput += buff.length
+	this.data.server.dataRead += buff.length
 }
 
 tunnel.prototype.sts_error = function(err) {
@@ -156,14 +154,16 @@ tunnel.prototype.csus_create = function() {
 
 tunnel.prototype.csus_listening = function(info) {
 	this.data.udp.status = 'listening'
+	this.data.udp.localAddress = info.address
+	this.data.udp.localPort = info.port
 }
 
 tunnel.prototype.csus_send = function(buf, offset, length, port, host) {
-	this.data.udp.packetOutput++
+	// TODO
 }
 
 tunnel.prototype.csus_message = function(buff, rinfo) {
-	this.data.udp.packetInput++
+	// TODO
 }
 
 tunnel.prototype.csus_error = function(err) {

@@ -27,8 +27,8 @@ block bodyex
 					th connectDateTime
 					th remoteAddress
 					th remotePort
-					th dataInput
-					th dataOutput
+					th dataRead
+					th dataWrite
 
 					th status
 					th error
@@ -36,18 +36,15 @@ block bodyex
 					th connectDateTime
 					th remoteAddress
 					th remotePort
-					th dataInput
-					th dataOutput
+					th dataRead
+					th dataWrite
 
 					th status
 					th error
 					th createDateTime
 					th localAddress
 					th localPort
-					th remoteAddress
-					th remotePort
-					th packetInput
-					th packetOutput
+					th packetHistorySummary
 			tbody
 				each tunnel in tunnelList
 					tr
@@ -60,8 +57,8 @@ block bodyex
 						td= tunnel.client.connectDateTime
 						td= tunnel.client.remoteAddress
 						td= tunnel.client.remotePort
-						td= tunnel.client.dataInput
-						td= tunnel.client.dataOutput
+						td= tunnel.client.dataRead
+						td= tunnel.client.dataWrite
 
 						td= tunnel.server.status
 						td= tunnel.server.error
@@ -69,18 +66,15 @@ block bodyex
 						td= tunnel.server.connectDateTime
 						td= tunnel.server.remoteAddress
 						td= tunnel.server.remotePort
-						td= tunnel.server.dataInput
-						td= tunnel.server.dataOutput
+						td= tunnel.server.dataRead
+						td= tunnel.server.dataWrite
 
 						td= tunnel.udp.status
 						td= tunnel.udp.error
 						td= tunnel.udp.createDateTime
 						td= tunnel.udp.localAddress
 						td= tunnel.udp.localPort
-						td= tunnel.udp.remoteAddress
-						td= tunnel.udp.remotePort
-						td= tunnel.udp.packetInput
-						td= tunnel.udp.packetOutput
+						td= tunnel.udp.packetHistorySummary
 
 	else
 		p tunnel list is empty
