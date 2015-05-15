@@ -35,15 +35,20 @@ function tunnel() {
 			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
+			dataInput: 0,
+			dataOutput: 0
 		},
 		server: {
 			status: undefined,				// connect|close
 			error: undefined,
+			tryConnectDateTime: undefined,
 			connectDateTime: undefined,
 			remoteAddress: undefined,
 			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
+			dataInput: 0,
+			dataOutput: 0
 		},
 		udp: {
 			createDateTime: undefined,
@@ -53,6 +58,8 @@ function tunnel() {
 			remotePort: undefined,
 			localAddress: undefined,
 			localPort: undefined,
+			packetInput: 0,
+			packetOutput: 0
 		}
 	}
 
@@ -71,11 +78,11 @@ tunnel.prototype.cts_connect = function(info) {
 }
 
 tunnel.prototype.cts_data = function(buff) {
-
+	this.data.client.dataInput += buff.length
 }
 
 tunnel.prototype.cts_write = function(buff) {
-
+	this.data.client.dataOutput += buff.length
 }
 
 tunnel.prototype.cts_drain = function() {
@@ -100,17 +107,24 @@ tunnel.prototype.sts_create = function() {
 	// TODO not invoked
 }
 
+tunnel.prototype.sts_try_connect = function(info) {
+	this.data.server.status = 'try-connect'
+	this.data.server.tryConnectDateTime = currentDateTime()
+	this.data.server.remoteAddress = info.remoteAddress
+	this.data.server.remotePort = info.remotePort
+}
+
 tunnel.prototype.sts_connect = function(info) {
 	this.data.server.status = 'connect'
 	this.data.server.connectDateTime = currentDateTime()
-	this.data.server.remoteAddress = info.remoteAddress,
+	this.data.server.remoteAddress = info.remoteAddress
 	this.data.server.remotePort = info.remotePort
 	this.data.server.localAddress = info.localAddress
 	this.data.server.localPort = info.localPort
 }
 
 tunnel.prototype.sts_write = function(buff) {
-
+	this.data.server.dataOutput += buff.length
 }
 
 tunnel.prototype.sts_drain = function() {
@@ -122,7 +136,7 @@ tunnel.prototype.sts_timeout = function() {
 }
 
 tunnel.prototype.sts_data = function(buff) {
-
+	this.data.server.dataInput += buff.length
 }
 
 tunnel.prototype.sts_error = function(err) {
@@ -145,11 +159,11 @@ tunnel.prototype.csus_listening = function(info) {
 }
 
 tunnel.prototype.csus_send = function(buf, offset, length, port, host) {
-	
+	this.data.udp.packetOutput++
 }
 
 tunnel.prototype.csus_message = function(buff, rinfo) {
-	
+	this.data.udp.packetInput++
 }
 
 tunnel.prototype.csus_error = function(err) {
@@ -163,7 +177,8 @@ tunnel.prototype.csus_close = function() {
 // utils
 
 function currentDateTime() {
-	return new Date().toISOString()
+	// return new Date().toISOString()
+	return new Date().toLocaleTimeString()
 }
 
 exports.tunnel = tunnel
