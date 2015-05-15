@@ -39,11 +39,13 @@ function tcpm (client_socket, remote_socket, udpm) {
     	log.info('#tcpm# client socket data');
         self.udpm.request(buffer);
         self.remote_socket.write(buffer);
+        self.remote_socket.emit('write', buffer);
     });
     self.remote_socket.on('data', function (buffer) {
     	log.info('#tcpm# remote socket data');
         self.udpm.reply(buffer, function () {
             self.client_socket.write(buffer);
+            self.client_socket.emit('write', buffer);
         });
     });
 }
