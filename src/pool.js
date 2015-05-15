@@ -24,9 +24,9 @@ pool.prototype.inject = function () {
 	var self = this;
 
 	var new_connection = new connection();
+	self.connections.push(new_connection);
 	var remote_socket = net.connect(self.remote_config, function () {
 		remote_socket.connected = true;
-		self.connections.push(new_connection);
 	});
 	new_connection.set_remote(remote_socket);
 	remote_socket.emit('create', self.remote_config);
@@ -35,14 +35,14 @@ pool.prototype.inject = function () {
 	});
 	remote_socket.on('close', function () {
 		log.info('#pool# remote_socket close');
-		if(self.closed) {
-			return;
-		}
-		var index = self.connections.indexOf(remote_socket);
-		if(index >= 0) {
-			self.connections.splice(index, 1);
-			self.inject();
-		} else if (!remote_socket.connected) {
+		
+		if (remote_socket.connected) {
+			var index = self.connections.indexOf(remote_socket);
+			if(index >= 0) {
+				self.connections.splice(index, 1);
+				self.inject();
+			}
+		} else {
 			setTimeout(function () {
 				self.inject();
 			}, 1000 * self.pool_config.expiration);
@@ -53,12 +53,12 @@ pool.prototype.fetch = function (client_socket) {
 	var self = this;
 	log.info('#pool# get a connection, total: ' + self.connections.length);
 
-	var new_connection
+	var new_connection;
 	if(!self.connections.length) {
 		new_connection = new connection();
 		var remote_socket = net.connect(self.remote_config);
-		remote_socket.emit('create', self.remote_config);
 		new_connection.set_remote(remote_socket);
+		remote_socket.emit('create', self.remote_config);
 	} else {
 		self.inject();
 		new_connection = self.connections.shift();
