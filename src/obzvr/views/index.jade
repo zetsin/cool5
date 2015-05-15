@@ -19,7 +19,7 @@ block bodyex
 					th(rowspan='2') type
 					th(rowspan='2') createDateTime
 					th(colspan='7') client
-					th(colspan='8') server
+					th(colspan='9') server
 					th(colspan='9') udp
 				tr
 					th status
@@ -32,8 +32,9 @@ block bodyex
 
 					th status
 					th error
-					th tryConnectDateTime
+					th createDateTime
 					th connectDateTime
+					th connectDelay
 					th remoteAddress
 					th remotePort
 					th dataRead
@@ -62,8 +63,9 @@ block bodyex
 
 						td= tunnel.server.status
 						td= tunnel.server.error
-						td= tunnel.server.tryConnectDateTime
+						td= tunnel.server.createDateTime
 						td= tunnel.server.connectDateTime
+						td= tunnel.server.connectDelay
 						td= tunnel.server.remoteAddress
 						td= tunnel.server.remotePort
 						td= tunnel.server.dataRead

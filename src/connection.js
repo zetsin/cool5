@@ -68,7 +68,10 @@ connection.prototype.set_remote = function (socket) {
 		});
 	});
 	self.remote_socket.on('create', function (addr) {
-		self.tunnel.sts_create(addr);
+		self.tunnel.sts_create({
+			remoteAddress: addr.host,
+			remotePort: addr.port
+		});
 	});
 	self.remote_socket.on('data', function (buff) {
 		self.tunnel.sts_data(buff);

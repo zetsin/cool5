@@ -41,8 +41,9 @@ function tunnel() {
 		server: {
 			status: undefined,				// connect|close
 			error: undefined,
-			tryConnectDateTime: undefined,
+			createDateTime: undefined,
 			connectDateTime: undefined,
+			connectDelay: undefined,
 			remoteAddress: undefined,
 			remotePort: undefined,
 			localAddress: undefined,
@@ -101,13 +102,8 @@ tunnel.prototype.cts_close = function() {
 
 // server tcp socket
 
-tunnel.prototype.sts_create = function() {
-	// TODO not invoked
-}
-
-tunnel.prototype.sts_try_connect = function(info) {
-	this.data.server.status = 'try-connect'
-	this.data.server.tryConnectDateTime = currentDateTime()
+tunnel.prototype.sts_create = function(info) {
+	this.data.server.createDateTime = currentDateTime()
 	this.data.server.remoteAddress = info.remoteAddress
 	this.data.server.remotePort = info.remotePort
 }
@@ -119,6 +115,10 @@ tunnel.prototype.sts_connect = function(info) {
 	this.data.server.remotePort = info.remotePort
 	this.data.server.localAddress = info.localAddress
 	this.data.server.localPort = info.localPort
+
+	var start = new Date(this.data.server.createDateTime)
+	var end = new Date(this.data.server.connectDateTime)
+	this.data.server.connectDelay = end - start
 }
 
 tunnel.prototype.sts_write = function(buff) {
@@ -139,6 +139,11 @@ tunnel.prototype.sts_data = function(buff) {
 
 tunnel.prototype.sts_error = function(err) {
 	this.data.server.error = err.toString()
+
+	if (!this.data.server.createDateTime) debugger // BUG
+	var start = new Date(this.data.server.createDateTime)
+	var end = new Date(new Date().toISOString())
+	this.data.server.connectDelay = end - start
 }
 
 tunnel.prototype.sts_close = function() {
@@ -177,8 +182,8 @@ tunnel.prototype.csus_close = function() {
 // utils
 
 function currentDateTime() {
-	// return new Date().toISOString()
-	return new Date().toLocaleTimeString()
+	return new Date().toISOString()
+	//return new Date().toLocaleTimeString()
 }
 
 exports.tunnel = tunnel
