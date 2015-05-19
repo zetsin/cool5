@@ -5,6 +5,7 @@ var config = require('./config')
 var mkdirp = require('mkdirp')
 var fs = require('fs')
 var path = require('path')
+var m
 
 // create the log directory
 // if exists already, no error occurs
@@ -20,23 +21,39 @@ if (logconfig.enabled) {
 }
 
 exports.info = function(str, v) {
+    measureStart()
 	var text = tstr(str, v || {})
 	log('info', text)
+    measureEnd()
 }
 
 exports.warning = function(str, v) {
+    measureStart()
 	var text = tstr(str, v || {})
 	log('warning', text)
+    measureEnd()
 }
 
 exports.error = function(str, v) {
+    measureStart()
 	var text = tstr(str, v || {})
 	log('error', text)
+    measureEnd()
 }
 
 exports.debug = function(str, v) {
+    measureStart()
 	var text = tstr(str, v || {})
 	log('debug', text)
+    measureEnd()
+}
+
+function measureStart() {
+    m = new Date()
+}
+
+function measureEnd() {
+    console.log(new Date() - m)
 }
 
 // this function is the core function of this module
