@@ -28,6 +28,7 @@ pool.prototype.inject = function () {
 	var remote_socket = net.connect(self.remote_config, function () {
 		remote_socket.connected = true;
 	});
+	remote_socket.setNoDelay(true);
 	new_connection.set_remote(remote_socket);
 	remote_socket.emit('create', self.remote_config);
 	remote_socket.on('error', function (err) {
@@ -57,6 +58,7 @@ pool.prototype.fetch = function (client_socket) {
 	if(!self.connections.length) {
 		new_connection = new connection();
 		var remote_socket = net.connect(self.remote_config);
+		remote_socket.setNoDelay(true);
 		new_connection.set_remote(remote_socket);
 		remote_socket.emit('create', self.remote_config);
 	} else {

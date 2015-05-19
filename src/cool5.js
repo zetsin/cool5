@@ -16,6 +16,7 @@ exports.start = function () {
     var server = net.createServer();
     server.on('connection', function (client) {
         log.info('#cool# client connected from ${remoteAddress}:${remotePort}', client);
+        client.setNoDelay(true);
         new_pool.fetch(client);
     });
     server.on('error', function (err) {
