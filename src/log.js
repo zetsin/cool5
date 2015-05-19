@@ -18,34 +18,40 @@ if (logconfig.enabled) {
             process.exit(1)            
         }
     })
-}
 
-exports.info = function(str, v) {
-    measureStart()
-	var text = tstr(str, v || {})
-	log('info', text)
-    measureEnd()
-}
+    exports.info = function(str, v) {
+        // measureStart()
+        var text = tstr(str, v || {})
+        log('info', text)
+        // measureEnd()
+    }
 
-exports.warning = function(str, v) {
-    measureStart()
-	var text = tstr(str, v || {})
-	log('warning', text)
-    measureEnd()
-}
+    exports.warning = function(str, v) {
+        // measureStart()
+        var text = tstr(str, v || {})
+        log('warning', text)
+        // measureEnd()
+    }
 
-exports.error = function(str, v) {
-    measureStart()
-	var text = tstr(str, v || {})
-	log('error', text)
-    measureEnd()
-}
+    exports.error = function(str, v) {
+        // measureStart()
+        var text = tstr(str, v || {})
+        log('error', text)
+        // measureEnd()
+    }
 
-exports.debug = function(str, v) {
-    measureStart()
-	var text = tstr(str, v || {})
-	log('debug', text)
-    measureEnd()
+    exports.debug = function(str, v) {
+        // measureStart()
+        var text = tstr(str, v || {})
+        log('debug', text)
+        // measureEnd()
+    }
+}
+else {
+    exports.info = function() {}
+    exports.warning = function() {}
+    exports.error = function() {}
+    exports.debug = function() {}
 }
 
 function measureStart() {
