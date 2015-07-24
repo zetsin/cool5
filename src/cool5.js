@@ -11,14 +11,14 @@ var pool = require('./pool.js');
 
 // 【函数】启动
 exports.start = function () {
-    log.info('optimize.tcpNoDelay=${0}', [config.get('optimize.tcpNoDelay')])
+    log.info('optimize.tcp_no_delay=${0}', [config.get('optimize.tcp_no_delay')])
 
     var new_pool = new pool();
     // create server
     var server = net.createServer();
     server.on('connection', function (client) {
         log.info('#cool# client connected from ${remoteAddress}:${remotePort}', client);
-        client.setNoDelay(config.get('optimize.tcpNoDelay'));
+        client.setNoDelay(config.get('optimize.tcp_no_delay'));
         new_pool.fetch(client);
     });
     server.on('error', function (err) {

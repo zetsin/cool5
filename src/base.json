@@ -9,5 +9,5 @@
 	"obzvr.enabled": true,
 	"obzvr.host": "127.0.0.1",
 	"obzvr.port": 29988,
-	"optimize.tcpNoDelay": true
+	"optimize.tcp_no_delay": true
 }
