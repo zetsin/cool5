@@ -3,7 +3,7 @@ var path = require('path')
 // load base config file first
 // if failed, application can not start up
 try {
-	var base_config = require('./base.json')
+	var base_config = load_config(relative_current_dir('./base.json'))
 }
 catch (err) {
 	// print info and exit the application
@@ -22,7 +22,7 @@ var argv = yargs
 // if failed, application can not start up
 try {
 	var user_config_file = path.resolve(argv.c)
-	var user_config = require(user_config_file)
+	var user_config = load_config(user_config_file)
 }
 catch (err) {
 	// print info and exit the application
@@ -70,4 +70,17 @@ exports.get = function(name) {
 function checkConfig(config) {
 	// TODO
 	return true
+}
+
+// load config file, JSON format
+function load_config(file) {
+	var fs = require('fs')
+	var content = fs.readFileSync(file, {encoding: 'utf8'})
+	var obj = JSON.parse(content)
+	return obj
+}
+
+// calulate full path relative to current directory
+function relative_current_dir(path) {
+	return require('path').resolve(__dirname, path)
 }
