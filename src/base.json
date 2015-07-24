@@ -1,23 +1,13 @@
 {
-	"local": {
-		"port": 1080,
-		"host": "0.0.0.0"
-	},
-	"pool": {
-		"enabled": true,
-		"capacity": 24,
-		"expiration": 60
-	},
-	"log": {
-		"enabled": true,
-		"directory": "./log"
-	},
-	"obzvr": {
-		"enabled": true,
-		"host": "127.0.0.1",
-		"port": 29988
-	},
-	"optimize": {
-		"tcpNoDelay": true	
-	}
+	"loca.lport": 1080,
+	"loca.lhost": "0.0.0.0",
+	"pool.enabled": true,
+	"pool.capacity": 24,
+	"pool.expiration": 60,
+	"log.enabled": true,
+	"log.directory": "./log",
+	"obzvr.enabled": true,
+	"obzvr.host": "127.0.0.1",
+	"obzvr.port": 29988,
+	"optimize.tcpNoDelay": true
 }

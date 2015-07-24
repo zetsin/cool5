@@ -7,8 +7,15 @@ var net = require('net');
 function pool () {
 	var self = this;
 
-	self.remote_config = config.get('remote');
-	self.pool_config = config.get('pool');
+	self.remote_config = {
+		host: config.get('remote.host'),
+		port: config.get('remote.port')
+	};
+	self.pool_config = {
+		enabled: config.get("pool.enabled"),
+		capacity: config.get("pool.capacity"),
+		expiration: config.get("pool.expiration")
+	}
 	self.connections = [];
 	log.info('#pool# config: enabled=${enabled}, capacity=${capacity}, expiration=${expiration}', self.pool_config);
 
@@ -28,7 +35,7 @@ pool.prototype.inject = function () {
 	var remote_socket = net.connect(self.remote_config, function () {
 		remote_socket.connected = true;
 	});
-	remote_socket.setNoDelay(config.get('optimize').tcpNoDelay);
+	remote_socket.setNoDelay(config.get('optimize.tcpNoDelay'));
 	new_connection.set_remote(remote_socket);
 	remote_socket.emit('create', self.remote_config);
 	remote_socket.on('error', function (err) {
@@ -58,7 +65,7 @@ pool.prototype.fetch = function (client_socket) {
 	if(!self.connections.length) {
 		new_connection = new connection();
 		var remote_socket = net.connect(self.remote_config);
-		remote_socket.setNoDelay(config.get('optimize').tcpNoDelay);
+		remote_socket.setNoDelay(config.get('optimize.tcpNoDelay'));
 		new_connection.set_remote(remote_socket);
 		remote_socket.emit('create', self.remote_config);
 	} else {

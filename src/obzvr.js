@@ -9,8 +9,7 @@ var data = {
 	tunnelList: []
 }
 
-var obzvr_config = config.get('obzvr')
-if (obzvr_config.enabled) {
+if (config.get('obzvr.enabled')) {
 	var web = require('./obzvr/web')
 	var obzvr_data = require('./obzvr/obzvr_data')
 	obzvr_data.get = function() {

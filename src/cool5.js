@@ -1,6 +1,8 @@
 // [config]
-// local  -> {host: <string>, port: <number>}
-// remote -> {host: <string>, port: <number>}
+// local.host: <string>
+// local.port: <number>
+// remote.host: <string>
+// remote.port: <number>
 
 var net = require('net');
 var config = require('./config.js');
@@ -9,15 +11,14 @@ var pool = require('./pool.js');
 
 // 【函数】启动
 exports.start = function () {
-    log.info('optimize.tcpNoDelay=${tcpNoDelay}', config.get('optimize'))
+    log.info('optimize.tcpNoDelay=${0}', [config.get('optimize.tcpNoDelay')])
 
     var new_pool = new pool();
     // create server
-    var local_config = config.get('local');
     var server = net.createServer();
     server.on('connection', function (client) {
         log.info('#cool# client connected from ${remoteAddress}:${remotePort}', client);
-        client.setNoDelay(config.get('optimize').tcpNoDelay);
+        client.setNoDelay(config.get('optimize.tcpNoDelay'));
         new_pool.fetch(client);
     });
     server.on('error', function (err) {
@@ -28,7 +29,7 @@ exports.start = function () {
         log.info('#cool# server closed');
         process.exit(1)
     });
-    server.listen(local_config.port, local_config.host, function() {
+    server.listen(config.get("local.port"), config.get("local.host"), function() {
         log.info('#cool# server opened on ${address}:${port}', server.address());
     });
 }

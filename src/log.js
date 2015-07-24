@@ -10,11 +10,10 @@ var m
 // create the log directory
 // if exists already, no error occurs
 
-var logconfig = config.get('log')
-if (logconfig.enabled) {
-    mkdirp(logconfig.directory, function(err) {
+if (config.get("log.enabled")) {
+    mkdirp(config.get("log.directory"), function(err) {
         if (err) {
-            log('error', tstr('create log directory failed: ${directory}', logconfig))
+            log('error', tstr('create log directory failed: ${0}', [config.get("log.directory")]))
             process.exit(1)            
         }
     })
@@ -66,7 +65,7 @@ function measureEnd() {
 // it implemented all the actually work to output the
 // log info to screen or file
 function log(level, text) {
-    if (logconfig.enabled) {
+    if (config.get("log.enabled")) {
         log_file(level, text)
         log_tty(level, text)
     }
@@ -97,7 +96,7 @@ function log(level, text) {
             date: dateStr(new Date()),
             level: level
         })
-        filename = path.resolve(logconfig.directory, filename)
+        filename = path.resolve(config.get("log.directory"), filename)
         fs.appendFile(filename, str, function(err) {
             if (!err) return
             // well, we have to print this problem to tty

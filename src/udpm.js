@@ -7,8 +7,6 @@ var dgram = require('dgram');
 function udpm () {
     var self = this;
 
-    var remote_config = config.get('remote');
-
     self.cmd = 0;
     self.bind = false;
     self.associate = dgram.createSocket('udp4');
@@ -18,7 +16,7 @@ function udpm () {
     };
     self.remote = {
     	port: 0,
-    	host: remote_config.host
+    	host: config.get("remote.host")
     };
     self.external_host = get_external_host();
 
