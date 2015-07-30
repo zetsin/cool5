@@ -30,7 +30,7 @@ HeaderParser.prototype.eat = function(chunk) {
 		// 先把新数据块与之前的合并
 		self.header_chunk = Buffer.concat([self.header_chunk, chunk])
 		// 然后处理
-		process(chunk)
+		process(self.header_chunk)
 	}
 	else {
 		// 无效状态，抛出异常
@@ -131,7 +131,8 @@ function parse_header_text(text) {
 	// 组成 object
 	var header = {}
 	pairs.forEach(function(p) {
-		header[p.name] = p.value
+		// name 统一转成小写便于处理
+		header[p.name.toLowerCase()] = p.value
 	})
 	// 返回结果
 	return header
