@@ -99,7 +99,6 @@ function combine(base_config, user_config) {
 }
 
 function print_config(final_config) {
-	console.log('[config]')
 	// dump property list
 	var property_list = []
 	for (var name in final_config) {
@@ -116,7 +115,7 @@ function print_config(final_config) {
 	property_list.forEach(function(property) {
 		console.log(property.name + ' = ' + property.value)
 	})
-	console.log('--------')
+	console.log('--------------------------------')
 
 	function align(property_list) {
 		var max_len = 0
