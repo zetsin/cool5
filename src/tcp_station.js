@@ -42,7 +42,8 @@ function create_tunnel(left_socket) {
     // 代理流程
     if (config.get('mode') === 'gpp_to_tcpudp') {
     	context = {
-    		header: null
+    		header: null,
+    		header_chunk: null
     	}
     	left_socket.on('data', gpp_to_tcpudp_data_handler)
     }
@@ -66,7 +67,7 @@ function create_tunnel(left_socket) {
     	log.info('[tcp_station] tunnel[${0}] data length=${1}', [id, chunk.length])
     }
 
-    // 在 gpp_to_gpp 模式下使用这个函数来处理
+    // 在 tcpudp_to_tcpudp 模式下使用这个函数来处理
     function gpp_to_gpp_data_handler(chunk) {
     	log.info('[tcp_station] tunnel[${0}] data length=${1}', [id, chunk.length])
     	// TODO
