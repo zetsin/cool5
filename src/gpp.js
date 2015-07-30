@@ -5,9 +5,8 @@ var semicolon = 0x3b
 var equal_sign = 0x3d
 var max_size = config.get('gpp.header.max_size')
 
-// 导出各个函数
-exports.detect_header_end = detect_header_end
-exports.test_detect_header_end = test_detect_header_end
+// 导出
+exports.HeaderParser = HeaderParser
 
 // 这个类用于持续的完成头部解析
 // 由于解析是一个分块处理的过程，因此使用这个类会很方便
@@ -20,37 +19,37 @@ function HeaderParser() {
 
 // 投递新的块给当前解析器，继续完成解析
 HeaderParser.prototype.eat = function(chunk) {
+	var self = this
+
 	// 头部尚未解析过，这是第一块数据
-	if (this.status === 0) {
+	if (self.status === 0) {
 		process(chunk)
 	}
 	// 上次数据不足，这次继续解析
-	else if (this.status === 1) {
+	else if (self.status === 1) {
 		// 先把新数据块与之前的合并
-		this.header_chunk = Buffer.concat([this.header_chunk, chunk])
+		self.header_chunk = Buffer.concat([self.header_chunk, chunk])
 		// 然后处理
 		process(chunk)
 	}
 	else {
 		// 无效状态，抛出异常
-		throw new Error('HeaderParser.eat() invalid status, status=' + this.status)
+		throw new Error('HeaderParser.eat() invalid status, status=' + self.status)
 	}
 
 	function process(chunk) {
 		var end = detect_header_end(chunk)
 		if (end < 0) {
 			// 头部非法，没有找到结尾（越界）
-			this.status = -1
+			self.status = -1
 		}
 		else if (end === chunk.length) {
 			// 需要更多的块
 			// 我们把这一块先暂存起来
-			this.status = 1
-			this.header_chunk = chunk
+			self.status = 1
+			self.header_chunk = chunk
 		}
 		else {
-			// 成功了
-			this.status = 2
 			// 解析一下
 			parse(chunk, end)
 		}
@@ -61,15 +60,17 @@ HeaderParser.prototype.eat = function(chunk) {
 		// 否则不需要（也不能，因为 split_chunk 的参数要求比较严格）
 		if (chunk.length >= 2 && end <= chunk.length-2) {
 			var tmp = split_chunk(chunk, end)
-			this.header_chunk = tmp[0]
-			this.tail_chunk = tmp[1]
+			self.header_chunk = tmp[0]
+			self.tail_chunk = tmp[1]
 		}
 		else {
-			this.header_chunk = chunk
+			self.header_chunk = chunk
 		}
 		// 转换为字符串进行解析
-		var header_text = this.header_chunk.toString('utf8')
-
+		var header_text = self.header_chunk.toString('utf8')
+		self.header = parse_header_text(header_text)
+		// 成功了
+		self.status = 2
 	}
 }
 

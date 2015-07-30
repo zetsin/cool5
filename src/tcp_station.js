@@ -1,6 +1,7 @@
 var config = require('./config')
 var net = require('net')
 var log = require('./log')
+var gpp = require('./gpp')
 
 var next_tunnel_id = 1
 
@@ -42,9 +43,7 @@ function create_tunnel(left_socket) {
     // 代理流程
     if (config.get('mode') === 'gpp_to_tcpudp') {
     	context = {
-    		status: 0,			// 0 头部尚未解析，1 头部正在解析中，2 头部已经成功解析，-1 头部解析失败
-    		header: null,
-    		header_chunk: null
+    		parser: new gpp.HeaderParser()
     	}
     	left_socket.on('data', gpp_to_tcpudp_data_handler)
     }
@@ -66,10 +65,32 @@ function create_tunnel(left_socket) {
     // 在 gpp_to_tcpudp 模式下使用这个函数来处理
     function gpp_to_tcpudp_data_handler(chunk) {
     	log.info('[tcp_station] tunnel[${0}] data length=${1}', [id, chunk.length])
-    	// 第一块数据？
-    	if () {
-
+    	var parser = context.parser
+    	// 头部解析还没完成吗？
+    	if (!parser.is_finished()) {debugger
+    		// 是的，继续吃 chunk 来解析
+    		parser.eat(chunk)
+    		// 完成了？
+    		if (parser.is_finished()) {
+    			// 成功了？
+    			if (parser.is_successful()) {
+    				var header = parser.get_header()
+    				// 可以进行代理中转了
+			    	log.info('[tcp_station] tunnel[${0}] header parsed ${1|json}', [id, header])
+    			}
+    			else {
+    				// 头部错误，断开连接
+			    	log.info('[tcp_station] tunnel[${0}] header parsed failed', [id])
+    			}
+    		}
     	}
+    	else if (parser.is_successful()) {
+    		// 完成了并且已经成功了，那么直接转发数据即可
+    	}
+    	else {
+    		// 失败了，但竟然还收到数据？忽略即可
+    	}
+
     }
 
     // 在 tcpudp_to_tcpudp 模式下使用这个函数来处理
