@@ -1,6 +1,6 @@
 {
-	"local.lport": 1080,
-	"local.lhost": "0.0.0.0",
+	"local.port": 1080,
+	"local.host": "0.0.0.0",
 	"pool.enabled": true,
 	"pool.capacity": 24,
 	"pool.expiration": 60,
