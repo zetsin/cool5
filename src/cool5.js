@@ -11,8 +11,7 @@ var pool = require('./pool.js');
 
 // 【函数】启动
 exports.start = function () {
-    log.info('optimize.tcp_no_delay=${0}', [config.get('optimize.tcp_no_delay')])
-
+    return
     var new_pool = new pool();
     // create server
     var server = net.createServer();

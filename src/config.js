@@ -34,11 +34,9 @@ catch (err) {
 // override relationship (left override right) is:
 // final_config --> user_config --> base_config
 
-var final_config = {}
-final_config.__proto__ = user_config
-user_config.__proto__ = base_config
-
-checkConfig(final_config)
+var final_config = combine(base_config, user_config)
+print_config(final_config)
+check_config(final_config)
 
 // ok, we can export the final_config via our 'get' function on this module
 // we don't expose the final_config object to outside because we don't permit any module
@@ -67,7 +65,7 @@ exports.get = function(name) {
 // to make sure that every config value has been setted properly
 // [notice]
 // if check failed, this function will print info and exit current application
-function checkConfig(config) {
+function check_config(config) {
 	// TODO
 	return true
 }
@@ -83,4 +81,71 @@ function load_config(file) {
 // calulate full path relative to current directory
 function relative_current_dir(path) {
 	return require('path').resolve(__dirname, path)
+}
+
+function combine(base_config, user_config) {
+	var o = {}
+	copy(base_config, o)
+	copy(user_config, o)
+	return o
+
+	function copy(src, dst) {
+		for (var name in src) {
+			if (src.hasOwnProperty(name)) {
+				dst[name] = src[name]
+			}
+		}
+	}
+}
+
+function print_config(final_config) {
+	console.log('[config]')
+	// dump property list
+	var property_list = []
+	for (var name in final_config) {
+		if (final_config.hasOwnProperty(name)) {
+			property_list.push({
+				name: name,
+				value: final_config[name]
+			})
+		}
+	}
+	// align property name in property list
+	property_list = align(property_list)
+	// output
+	property_list.forEach(function(property) {
+		console.log(property.name + ' = ' + property.value)
+	})
+	console.log('--------')
+
+	function align(property_list) {
+		var max_len = 0
+		// which name is the longest ?
+		property_list.forEach(function(property) {
+			if (property.name.length > max_len) max_len = property.name.length
+		})
+		// padding every name as the longgest name
+		new_property_list = property_list.map(function(property) {
+			return {
+				name: padding(property.name, max_len),
+				value: property.value
+			}
+		})
+		// return result
+		return new_property_list
+
+		function padding(name, to_length) {
+			var rest = to_length - name.length
+			if (rest <= 0) return name
+			else return name + sp(rest)
+
+			function sp(count) {
+				var t = ''
+				while (count-- > 0) {
+					t += ' '
+				}
+				return t
+			}
+		}
+	}
 }
