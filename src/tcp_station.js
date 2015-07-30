@@ -35,6 +35,10 @@ function create_tunnel(left_socket) {
 	var left_socket = left_socket
 	var right_socket = null
 	var context = null
+	var queue = {
+		left_to_right: [],
+		right_to_left: []
+	}
 
 	log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [id, config.get('optimize.tcp_no_delay')])
     left_socket.setNoDelay(config.get('optimize.tcp_no_delay'))
@@ -85,7 +89,7 @@ function create_tunnel(left_socket) {
 			    	// 如果有余块，要记得发送
 			    	if (parser.exists_tail_chunk()) {
 				    	//console.log('<tail>' + parser.get_tail_chunk().toString('utf8'))
-			    		right_socket.x_write(parser.get_tail_chunk())
+			    		queue.left_to_right.push(parser.get_tail_chunk())
 			    	}
     			}
     			else {
@@ -98,7 +102,7 @@ function create_tunnel(left_socket) {
     	else if (parser.is_successful()) {
     		// 完成了并且已经成功了，那么直接转发数据即可
 	    	//console.log('<write>' + chunk.toString('utf8'))
-    		right_socket.x_write(chunk)
+    		queue.left_to_right.push(chunk)
     	}
     	else {
     		// 失败了，但竟然还收到数据？忽略即可
@@ -107,35 +111,20 @@ function create_tunnel(left_socket) {
     	function create_right_socket(header) {
     		// 开始连接
     		right_socket = net.connect(header.port, header.ip)
-    		this.x_is_connected = false
-    		// 我们添加一个辅助方法用于实现安全写入
-    		right_socket.x_write = function(chunk) {
-    			if (this.x_is_connected) {
-    				this.write(chunk)
-    			}
-    			else {
-    				this.x_write_list = this.x_write_list || []
-    				this.x_write_list.push(chunk)
-    			}
-    		}
     		// TODO 设置 tcp_no_delay
 
     		right_socket.on('connect', function() {
 		    	log.info('[tcp_station] tunnel[${0}] right connect', [id])
-		    	this.x_is_connected = true
-		    	if (this.x_write_list) {
-		    		while (this.x_write_list.length > 0) {
-		    			var c = this.x_write_list.shift()
-		    			console.log('x_write -> ' + c.length)
-		    			this.write(c)
-		    		}
-		    	}
+    		})
+
+    		right_socket.on('drain', function() {
+		    	log.info('[tcp_station] tunnel[${0}] right drain', [id])    			
     		})
 
     		right_socket.on('data', function(chunk) {
 		    	log.info('[tcp_station] tunnel[${0}] right data length=${1}', [id, chunk.length])
 		    	//console.log(chunk.toString('utf8'))
-    			left_socket.write(chunk)
+    			queue.right_to_left.write(chunk)
     		})
 
     		right_socket.on('error', function(err) {
