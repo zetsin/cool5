@@ -13,23 +13,23 @@ exports.start = function() {
     //var intv = null
 
 	server.on('listening', function() {
-	    log.info('[tcp_station] server.listening ip=${address}, port=${port}', server.address())
+	    log.info('[tcp_station] server listening ip=${address}, port=${port}', server.address())
         // 每隔一段时间自动清理无效 tunnel
         //intv = setInterval(clear_dead_tunnel, 10 * 1000)
 	})
 
 	server.on('connection', function (client) {
-	    log.info('[tcp_station] server.connection ip=${remoteAddress}, port=${remotePort}', client)
+	    log.info('[tcp_station] server connection from ip=${remoteAddress}, port=${remotePort}', client)
 	    var tunnel = new Tunnel(client, on_tunnel_close)
         alive_tunnel_list.push(tunnel)
 	})
 
 	server.on('error', function (err) {
-	    log.error('[tcp_station] server.error ${0}', [err.toString()])
+	    log.error('[tcp_station] server error ${0}', [err.toString()])
 	})
 
 	server.on('close', function () {
-	    log.info('[tcp_station] server.close')
+	    log.info('[tcp_station] server close')
         //clearInterval(intv)
 	})
 
@@ -108,7 +108,7 @@ Tunnel.prototype.on_left_socket_data = function(chunk) {
     this.context.handler(chunk)
 }
 
-Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk) {debugger
+Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk) {
     var parser = this.context.parser
     // 头部解析尚未完成吗？
     if (!parser.is_finished()) {
