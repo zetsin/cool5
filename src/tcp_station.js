@@ -61,10 +61,12 @@ function create_tunnel(left_socket) {
 
     t.left_socket.on('error', function(err) {
     	log.info('[tcp_station] tunnel[${0}] left error ${1}', [t.id, err.toString()])
+        // error 之后将会引发 close 事件
     })
 
     t.left_socket.on('close', function() {
     	log.info('[tcp_station] tunnel[${0}] left close', [t.id])
+        t.left_socket = null
     	if (t.right_socket) {
     		t.right_socket.end()
     	}
@@ -124,10 +126,12 @@ function create_tunnel(left_socket) {
 
     		t.right_socket.on('error', function(err) {
 		    	log.info('[tcp_station] tunnel[${0}] right error ${1}', [t.id, err.toString()])
+                // error 之后将引发 close 事件
     		})
 
     		t.right_socket.on('close', function() {
     			log.info('[tcp_station] tunnel[${0}] right close', [t.id])
+                t.right_socket = null
     			if (t.left_socket) {
     				t.left_socket.end()
     			}
@@ -135,6 +139,12 @@ function create_tunnel(left_socket) {
     	}
 
         function deliver_chunk(chunk, from_socket, to_socket) {
+            // 因为资源释放的关系，to_socket 可能为 null
+            // 但是 from_socket 在此刻是不可能为 null 的
+            if (!to_socket) {
+                return
+            }
+
             if (!to_socket.write(chunk)) {
                 from_socket.pause()
                 to_socket.once('drain', function() {
