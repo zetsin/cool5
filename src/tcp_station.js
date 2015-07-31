@@ -53,13 +53,14 @@ function on_tunnel_close(tunnel) {
 }
 
 // # on_close(tunnel)
-function Tunnel(left_socket, on_close) {
+function Tunnel(left_socket, on_close_listener) {
     this.id = next_tunnel_id++
     this.left_socket = left_socket
     this.right_socket = null
     this.left_socket_closed = false
-    this.right_socket_closed = true
-    this.on_close = on_close || function() {}
+    this.right_socket_closed = false
+    this.on_close = this.on_close_handler.bind(this)
+    this.on_close_listener = on_close_listener
 
     if (config.get('mode') === 'gpp_to_tcpudp') {
         this.context = {
@@ -79,7 +80,24 @@ function Tunnel(left_socket, on_close) {
 
     this.left_socket.on('data', this.on_left_socket_data.bind(this))
     this.left_socket.on('error', this.on_left_socket_error.bind(this))
+    this.left_socket.on('end', this.on_left_socket_end.bind(this))
     this.left_socket.on('close', this.on_left_socket_close.bind(this))
+}
+
+Tunnel.prototype.on_close_handler = function() {
+    log.info('[tcp_station] tunnel[${0}] close begin, clear resource', [this.id])
+    // 释放资源
+    if (this.left_socket) {
+        this.left_socket.removeAllListeners()
+        this.left_socket = null
+    }
+    if (this.right_socket) {
+        this.right_socket.removeAllListeners()
+        this.right_socket = null
+    }
+    this.context = null
+    // 通知外部订阅者
+    this.on_close_listener(this)
 }
 
 Tunnel.prototype.on_left_socket_data = function(chunk) {
@@ -134,6 +152,10 @@ Tunnel.prototype.on_left_socket_error = function(err) {
     log.info('[tcp_station] tunnel[${0}] left error ${1}', [this.id, err.toString()])
 }
 
+Tunnel.prototype.on_left_socket_end = function() {
+    log.info('[tcp_station] tunnel[${0}] left end', [this.id])
+}
+
 Tunnel.prototype.on_left_socket_close = function() {
     log.info('[tcp_station] tunnel[${0}] left close', [this.id])
     // 把 left_socket 标记为 closed
@@ -141,9 +163,11 @@ Tunnel.prototype.on_left_socket_close = function() {
     // 如果 right_socket 尚未建立，或者已经关闭
     // 那么我们应当触发 this.on_close 回调
     if (!this.right_socket || this.right_socket_closed) {
+        //log.info('[tcp_station] tunnel[${0}] DEBUG-1 this.right_socket=${1} this.right_socket_closed=${2}', [this.id, (this.right_socket && true).toString(), this.right_socket_closed.toString()])
         this.on_close(this)
     }
     else {
+        //log.info('[tcp_station] tunnel[${0}] DEBUG-2 this.right_socket=${1} this.right_socket_closed=${2}', [this.id, (this.right_socket && true).toString(), this.right_socket_closed.toString()])
         // 关闭 right_socket
         this.right_socket.end()
     }
@@ -157,6 +181,7 @@ Tunnel.prototype.create_right_socket = function(host, port) {
     this.right_socket.on('connect', this.on_right_socket_connect.bind(this))
     this.right_socket.on('data', this.on_right_socket_data.bind(this))
     this.right_socket.on('error', this.on_right_socket_error.bind(this))
+    this.right_socket.on('end', this.on_right_socket_end.bind(this))
     this.right_socket.on('close', this.on_right_socket_close.bind(this))
 }
 
@@ -172,6 +197,10 @@ Tunnel.prototype.on_right_socket_data = function(chunk) {
 
 Tunnel.prototype.on_right_socket_error = function(err) {
     log.info('[tcp_station] tunnel[${0}] right error ${1}', [this.id, err.toString()])
+}
+
+Tunnel.prototype.on_right_socket_end = function() {
+    log.info('[tcp_station] tunnel[${0}] right end', [this.id])
 }
 
 Tunnel.prototype.on_right_socket_close = function() {
