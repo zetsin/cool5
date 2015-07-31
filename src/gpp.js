@@ -59,9 +59,12 @@ HeaderParser.prototype.eat = function(chunk) {
 		// 如果真的存在 tail_chunk 就分割一下
 		// 否则不需要（也不能，因为 split_chunk 的参数要求比较严格）
 		if (chunk.length >= 2 && end <= chunk.length-2) {
+			//console.log('<DEBUG-chunk> ' + chunk.toString('hex'))
 			var tmp = split_chunk(chunk, end)
 			self.header_chunk = tmp[0]
 			self.tail_chunk = tmp[1]
+			//console.log('<DEBUG-tmp0> ' + tmp[0].toString('hex'))
+			//console.log('<DEBUG-tmp1> ' + tmp[1].toString('hex'))
 		}
 		else {
 			self.header_chunk = chunk
@@ -146,15 +149,10 @@ function split_chunk(chunk, i) {
 	if (chunk.length < 2) {
 		throw new Error('split_chunk(): can not split cause chunk.length < 2. chunk.length=' + chunk.length)
 	}
-
 	if (i < 0 || i > chunk.length-2) {
 		throw new Error('split_chunk(): invalid range, i must be [0, chunk.length-2]. chunk.length=' + chunk.length + ', i=' + i)
 	}
-	var head = new Buffer(i+1)
-	var tail = new Buffer(chunk.length - (i+1))
-	chunk.copy(head, 0, 0, head.length)
-	chunk.copy(tail, 0, i+1, tail.length)
-	return [head, tail]
+	return [chunk.slice(0, i+1), chunk.slice(i+1)]
 }
 
 // 这个函数用于判断 header 结尾位置
@@ -200,4 +198,4 @@ function assert(v) {
 	}
 }
 
-console.log('test_detect_header_end:', test_detect_header_end())
+//console.log('test_detect_header_end:', test_detect_header_end())
