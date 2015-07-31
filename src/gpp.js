@@ -63,8 +63,8 @@ HeaderParser.prototype.eat = function(chunk) {
 			var tmp = split_chunk(chunk, end)
 			self.header_chunk = tmp[0]
 			self.tail_chunk = tmp[1]
-			//console.log('<DEBUG-tmp0> ' + tmp[0].toString('hex'))
-			//console.log('<DEBUG-tmp1> ' + tmp[1].toString('hex'))
+			//console.log('<DEBUG-tmp_0> ' + tmp[0].toString('hex'))
+			//console.log('<DEBUG-tmp_1> ' + tmp[1].toString('hex'))
 		}
 		else {
 			self.header_chunk = chunk

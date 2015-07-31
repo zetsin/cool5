@@ -4,18 +4,23 @@ var log = require('./log')
 var gpp = require('./gpp')
 
 var next_tunnel_id = 1
+var alive_tunnel_list = []
 
 exports.start = function() {
 
 	var server = net.createServer()
+    var intv = null
 
 	server.on('listening', function() {
 	    log.info('[tcp_station] server.listening ip=${address}, port=${port}', server.address())
+        // 每隔一段时间自动清理无效 tunnel
+        intv = setInterval(clear_dead_tunnel, 10 * 1000)
 	})
 
 	server.on('connection', function (client) {
 	    log.info('[tcp_station] server.connection ip=${remoteAddress}, port=${remotePort}', client)
-	    create_tunnel(client)
+	    var tunnel = new Tunnel(client, on_tunnel_close)
+        alive_tunnel_list.push(tunnel)
 	})
 
 	server.on('error', function (err) {
@@ -24,139 +29,148 @@ exports.start = function() {
 
 	server.on('close', function () {
 	    log.info('[tcp_station] server.close')
+        clearInterval(intv)
 	})
 
-	server.listen(config.get("local.tcp.port"), config.get("local.tcp.host"));
-	
+	server.listen(config.get("local.tcp.port"), config.get("local.tcp.host"));	
 }
 
-function create_tunnel(left_socket) {
-    // 创建 tunnel 并加入列表
-    var tunnel = {
-    	id: next_tunnel_id++,
-    	left_socket: left_socket,
-    	right_socket: null,
-    	context: null
-    }
+function clear_dead_tunnel() {return
+    var length_before = alive_tunnel_list.length
+    alive_tunnel_list = alive_tunnel_list.filter(function(tunnel) {
+        var is_dead = tunnel.left_socket_closed && (!tunnel.right_socket || tunnel.right_socket_closed)
+        return !is_dead
+    })
+    var length_after = alive_tunnel_list.length
+    log.info('[tcp_station] clear dead tunnel, before ${0} after ${1}', [length_before, length_after])
+}
 
-    var t = tunnel
+function on_tunnel_close(tunnel) {
+    alive_tunnel_list = alive_tunnel_list.filter(function(_tunnel) {
+        return _tunnel !== tunnel
+    })
+    log.info('[tcp_station] tunnel[${0}] close, rest tunnel ${1}', [tunnel.id, alive_tunnel_list.length])
+}
 
-	log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [t.id, config.get('optimize.tcp_no_delay')])
-    //t.left_socket.setNoDelay(config.get('optimize.tcp_no_delay'))
+// # on_close(tunnel)
+function Tunnel(left_socket, on_close) {
+    this.id = next_tunnel_id++
+    this.left_socket = left_socket
+    this.right_socket = null
+    this.left_socket_closed = false
+    this.right_socket_closed = true
+    this.on_close = on_close || function() {}
 
-    // 根据当前 config 里的 mode 不同，我们将采用不同的
-    // 代理流程
     if (config.get('mode') === 'gpp_to_tcpudp') {
-    	t.context = {
-    		parser: new gpp.HeaderParser()
-    	}
-    	t.left_socket.on('data', gpp_to_tcpudp_data_handler)
-    }
-    else if (config.get('mode') === 'gpp_to_gpp') {
-    	throw new Error('TODO')
-    }
-    else {
-    	throw new Error('Unknown mode')
-    }
-
-    t.left_socket.on('error', function(err) {
-    	log.info('[tcp_station] tunnel[${0}] left error ${1}', [t.id, err.toString()])
-        // error 之后将会引发 close 事件
-    })
-
-    t.left_socket.on('close', function() {
-    	log.info('[tcp_station] tunnel[${0}] left close', [t.id])
-        t.left_socket = null
-    	if (t.right_socket) {
-    		t.right_socket.end()
-    	}
-    })
-
-    // 在 gpp_to_tcpudp 模式下使用这个函数来处理
-    function gpp_to_tcpudp_data_handler(chunk) {
-    	log.info('[tcp_station] tunnel[${0}] left data length=${1}', [t.id, chunk.length])
-    	//console.log(chunk.toString('hex'))
-    	var parser = t.context.parser
-    	// 头部解析还没完成吗？
-    	if (!parser.is_finished()) {
-    		// 是的，继续吃 chunk 来解析
-    		parser.eat(chunk)
-    		// 完成了？
-    		if (parser.is_finished()) {
-    			// 成功了？
-    			if (parser.is_successful()) {
-    				var header = parser.get_header()
-    				// 可以进行代理中转了
-			    	log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [t.id, header])
-			    	create_right_socket(header)
-			    	// 如果有余块，要记得发送
-			    	if (parser.exists_tail_chunk()) {
-			    		deliver_chunk(parser.get_tail_chunk(), t.left_socket, t.right_socket)
-			    	}
-    			}
-    			else {
-    				// 头部错误，强行断开连接
-			    	log.info('[tcp_station] tunnel[${0}] left header parsed failed', [t.id])
-			    	t.left_socket.destroy()
-    			}
-    		}
-    	}
-    	else if (parser.is_successful()) {
-    		// 完成了并且已经成功了，那么直接转发数据即可
-    		deliver_chunk(chunk, t.left_socket, t.right_socket)
-    	}
-    	else {
-    		// 失败了，但竟然还收到数据？忽略即可
-    	}
-
-    	function create_right_socket(header) {
-    		// 开始连接
-            t.right_socket = net.connect(header.port, header.ip)
-            //t.right_socket = net.connect(80, 'localhost')
-    		// TODO 设置 tcp_no_delay
-
-    		t.right_socket.on('connect', function() {
-		    	log.info('[tcp_station] tunnel[${0}] right connect', [t.id])
-    		})
-
-    		t.right_socket.on('data', function(chunk) {
-		    	log.info('[tcp_station] tunnel[${0}] right data length=${1}', [t.id, chunk.length])
-    			deliver_chunk(chunk, t.right_socket, t.left_socket)
-    		})
-
-    		t.right_socket.on('error', function(err) {
-		    	log.info('[tcp_station] tunnel[${0}] right error ${1}', [t.id, err.toString()])
-                // error 之后将引发 close 事件
-    		})
-
-    		t.right_socket.on('close', function() {
-    			log.info('[tcp_station] tunnel[${0}] right close', [t.id])
-                t.right_socket = null
-    			if (t.left_socket) {
-    				t.left_socket.end()
-    			}
-    		})
-    	}
-
-        function deliver_chunk(chunk, from_socket, to_socket) {
-            // 因为资源释放的关系，to_socket 可能为 null
-            // 但是 from_socket 在此刻是不可能为 null 的
-            if (!to_socket) {
-                return
-            }
-
-            if (!to_socket.write(chunk)) {
-                from_socket.pause()
-                to_socket.once('drain', function() {
-                    from_socket.resume()
-                })
-            }
+        this.context = {
+            parser: new gpp.HeaderParser(),
+            handler: this.on_left_socket_data_gpp_to_tcpudp_mode_handler.bind(this)
         }
     }
+    else if (config.get('mode') === 'gpp_to_gpp') {
+        throw new Error('TODO')
+    }
+    else {
+        throw new Error('Unknown mode')
+    }
 
-    // 在 tcpudp_to_tcpudp 模式下使用这个函数来处理
-    function gpp_to_gpp_data_handler(chunk) {
-    	log.info('[tcp_station] tunnel[${0}] data length=${1}', [t.id, chunk.length])
-    	// TODO
+    log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [this.id, config.get('optimize.tcp_no_delay')])
+    //t.left_socket.setNoDelay(config.get('optimize.tcp_no_delay'))
+
+    this.left_socket.on('data', this.on_left_socket_data.bind(this))
+    this.left_socket.on('error', this.on_left_socket_error.bind(this))
+    this.left_socket.on('close', this.on_left_socket_close.bind(this))
+}
+
+Tunnel.prototype.on_left_socket_data = function(chunk) {
+    log.info('[tcp_station] tunnel[${0}] left data length=${1}', [this.id, chunk.length])
+    this.context.handler(chunk)
+}
+
+Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk) {
+    var parser = this.context.parser
+    // 头部解析尚未完成吗？
+    if (!parser.is_finished()) {
+        // 是的，继续吃 chunk 来解析
+        parser.eat(chunk)
+        // 完成了？
+        if (parser.is_finished()) {
+            // 成功了？
+            if (parser.is_successful()) {
+                var header = parser.get_header()
+                // 可以进行代理中转了
+                log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [this.id, header])
+                this.create_right_socket(header.ip, header.port)
+                // 如果有尾块，要记得发送
+                if (parser.exists_tail_chunk()) {
+                    this.right_socket.write(chunk)
+                }
+            }
+            // 失败了
+            else {
+                // 头部错误，强行断开连接
+                log.info('[tcp_station] tunnel[${0}] left header parsed failed', [this.id])
+                this.left_socket.destroy()
+            }    
+        }
+        // 还是没完成
+        else {
+            // 没关系，等待下一个数据块
+        }
+    }
+    // 头部解析已经完成了
+    // 成功了吗？
+    else if (parser.is_successful()) {
+        // 是的，直接转发数据即可
+        this.right_socket.write(chunk)
+    }
+    // 失败了，竟然还收到数据？忽略即可
+    else {
+        // 不需要做什么
+    }
+}
+
+Tunnel.prototype.on_left_socket_error = function(err) {
+    log.info('[tcp_station] tunnel[${0}] left error ${1}', [this.id, err.toString()])
+}
+
+Tunnel.prototype.on_left_socket_close = function() {
+    log.info('[tcp_station] tunnel[${0}] left close', [this.id])
+    this.left_socket_closed = true
+    if (this.right_socket && !this.right_socket_closed) {
+        this.right_socket.end()
+    }
+}
+
+Tunnel.prototype.create_right_socket = function(host, port) {
+    // 开始连接
+    this.right_socket = net.connect(port, host)
+    //this.right_socket = net.connect(80)
+    // 订阅各个事件
+    this.right_socket.on('connect', this.on_right_socket_connect.bind(this))
+    this.right_socket.on('data', this.on_right_socket_data.bind(this))
+    this.right_socket.on('error', this.on_right_socket_error.bind(this))
+    this.right_socket.on('close', this.on_right_socket_close.bind(this))
+}
+
+Tunnel.prototype.on_right_socket_connect = function() {
+    log.info('[tcp_station] tunnel[${0}] right connect', [this.id])
+}
+
+Tunnel.prototype.on_right_socket_data = function(chunk) {
+    log.info('[tcp_station] tunnel[${0}] right data length=${1}', [this.id, chunk.length])
+    // 转发数据
+    this.left_socket.write(chunk)
+}
+
+Tunnel.prototype.on_right_socket_error = function(err) {
+    log.info('[tcp_station] tunnel[${0}] right error ${1}', [this.id, err.toString()])
+}
+
+Tunnel.prototype.on_right_socket_close = function() {
+    log.info('[tcp_station] tunnel[${0}] right close', [this.id])
+    this.right_socket_closed = true
+    if (this.left_socket && !this.left_socket_closed) {
+        this.left_socket.end()
     }
 }
