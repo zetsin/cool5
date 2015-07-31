@@ -3,12 +3,13 @@ var net = require('net')
 var log = require('./log')
 var gpp = require('./gpp')
 
+var server = null
 var next_tunnel_id = 1
 var alive_tunnel_list = []
 
 exports.start = function() {
 
-	var server = net.createServer()
+	server = net.createServer()
     //var intv = null
 
 	server.on('listening', function() {

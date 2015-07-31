@@ -8,7 +8,7 @@
 	"pool.enabled": true,
 	"pool.capacity": 24,
 	"pool.expiration": 60,
-	"log.enabled": false,
+	"log.enabled": true,
 	"log.directory": "./log",
 	"obzvr.enabled": false,
 	"obzvr.host": "127.0.0.1",
