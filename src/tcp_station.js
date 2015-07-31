@@ -4,7 +4,6 @@ var log = require('./log')
 var gpp = require('./gpp')
 
 var next_tunnel_id = 1
-var alive_tunnel_list = []
 
 exports.start = function() {
 
@@ -39,7 +38,6 @@ function create_tunnel(left_socket) {
     	right_socket: null,
     	context: null
     }
-    alive_tunnel_list.push(tunnel)
 
     var t = tunnel
 
