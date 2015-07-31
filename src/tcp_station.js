@@ -76,7 +76,9 @@ function Tunnel(left_socket, on_close_listener) {
     }
 
     log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [this.id, config.get('optimize.tcp_no_delay')])
-    //t.left_socket.setNoDelay(config.get('optimize.tcp_no_delay'))
+    if (config.get('optimize.tcp_no_delay') === true) {
+        this.left_socket.setNoDelay(true)
+    }
 
     this.left_socket.on('data', this.on_left_socket_data.bind(this))
     this.left_socket.on('error', this.on_left_socket_error.bind(this))
@@ -176,6 +178,9 @@ Tunnel.prototype.on_left_socket_close = function() {
 Tunnel.prototype.create_right_socket = function(host, port) {
     // 开始连接
     this.right_socket = net.connect(port, host)
+    if (config.get('optimize.tcp_no_delay') === true) {
+        this.right_socket.setNoDelay(true)
+    }
     //this.right_socket = net.connect(80)
     // 订阅各个事件
     this.right_socket.on('connect', this.on_right_socket_connect.bind(this))
