@@ -35,10 +35,6 @@ function create_tunnel(left_socket) {
 	var left_socket = left_socket
 	var right_socket = null
 	var context = null
-	var queue = {
-		left_to_right: [],
-		right_to_left: []
-	}
 
 	log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [id, config.get('optimize.tcp_no_delay')])
     left_socket.setNoDelay(config.get('optimize.tcp_no_delay'))
@@ -89,7 +85,7 @@ function create_tunnel(left_socket) {
 			    	// 如果有余块，要记得发送
 			    	if (parser.exists_tail_chunk()) {
 				    	//console.log('<tail>' + parser.get_tail_chunk().toString('utf8'))
-			    		queue.left_to_right.push(parser.get_tail_chunk())
+			    		deliver_chunk(parser.get_tail_chunk(), left_socket, right_socket)
 			    	}
     			}
     			else {
@@ -102,7 +98,7 @@ function create_tunnel(left_socket) {
     	else if (parser.is_successful()) {
     		// 完成了并且已经成功了，那么直接转发数据即可
 	    	//console.log('<write>' + chunk.toString('utf8'))
-    		queue.left_to_right.push(chunk)
+    		deliver_chunk(chunk, left_socket, right_socket)
     	}
     	else {
     		// 失败了，但竟然还收到数据？忽略即可
@@ -117,14 +113,14 @@ function create_tunnel(left_socket) {
 		    	log.info('[tcp_station] tunnel[${0}] right connect', [id])
     		})
 
-    		right_socket.on('drain', function() {
-		    	log.info('[tcp_station] tunnel[${0}] right drain', [id])    			
-    		})
+    		// right_socket.on('drain', function() {
+		    // 	log.info('[tcp_station] tunnel[${0}] right drain', [id])    			
+    		// })
 
     		right_socket.on('data', function(chunk) {
 		    	log.info('[tcp_station] tunnel[${0}] right data length=${1}', [id, chunk.length])
 		    	//console.log(chunk.toString('utf8'))
-    			queue.right_to_left.write(chunk)
+    			deliver_chunk(chunk, right_socket, left_socket)
     		})
 
     		right_socket.on('error', function(err) {
@@ -138,6 +134,15 @@ function create_tunnel(left_socket) {
     			}
     		})
     	}
+
+        function deliver_chunk(chunk, from_socket, to_socket) {
+            if (!to_socket.write(chunk)) {
+                from_socket.pause()
+                to_socket.once('drain', function() {
+                    from_socket.resume()
+                })
+            }
+        }
     }
 
     // 在 tcpudp_to_tcpudp 模式下使用这个函数来处理
