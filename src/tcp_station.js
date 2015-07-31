@@ -9,12 +9,12 @@ var alive_tunnel_list = []
 exports.start = function() {
 
 	var server = net.createServer()
-    var intv = null
+    //var intv = null
 
 	server.on('listening', function() {
 	    log.info('[tcp_station] server.listening ip=${address}, port=${port}', server.address())
         // 每隔一段时间自动清理无效 tunnel
-        intv = setInterval(clear_dead_tunnel, 10 * 1000)
+        //intv = setInterval(clear_dead_tunnel, 10 * 1000)
 	})
 
 	server.on('connection', function (client) {
@@ -29,13 +29,13 @@ exports.start = function() {
 
 	server.on('close', function () {
 	    log.info('[tcp_station] server.close')
-        clearInterval(intv)
+        //clearInterval(intv)
 	})
 
 	server.listen(config.get("local.tcp.port"), config.get("local.tcp.host"));	
 }
 
-function clear_dead_tunnel() {return
+function clear_dead_tunnel() {
     var length_before = alive_tunnel_list.length
     alive_tunnel_list = alive_tunnel_list.filter(function(tunnel) {
         var is_dead = tunnel.left_socket_closed && (!tunnel.right_socket || tunnel.right_socket_closed)
@@ -87,7 +87,7 @@ Tunnel.prototype.on_left_socket_data = function(chunk) {
     this.context.handler(chunk)
 }
 
-Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk) {
+Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk) {debugger
     var parser = this.context.parser
     // 头部解析尚未完成吗？
     if (!parser.is_finished()) {
@@ -103,7 +103,7 @@ Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk
                 this.create_right_socket(header.ip, header.port)
                 // 如果有尾块，要记得发送
                 if (parser.exists_tail_chunk()) {
-                    this.right_socket.write(chunk)
+                    this.right_socket.write(parser.get_tail_chunk())
                 }
             }
             // 失败了
@@ -136,8 +136,15 @@ Tunnel.prototype.on_left_socket_error = function(err) {
 
 Tunnel.prototype.on_left_socket_close = function() {
     log.info('[tcp_station] tunnel[${0}] left close', [this.id])
+    // 把 left_socket 标记为 closed
     this.left_socket_closed = true
-    if (this.right_socket && !this.right_socket_closed) {
+    // 如果 right_socket 尚未建立，或者已经关闭
+    // 那么我们应当触发 this.on_close 回调
+    if (!this.right_socket || this.right_socket_closed) {
+        this.on_close(this)
+    }
+    else {
+        // 关闭 right_socket
         this.right_socket.end()
     }
 }
@@ -170,7 +177,13 @@ Tunnel.prototype.on_right_socket_error = function(err) {
 Tunnel.prototype.on_right_socket_close = function() {
     log.info('[tcp_station] tunnel[${0}] right close', [this.id])
     this.right_socket_closed = true
-    if (this.left_socket && !this.left_socket_closed) {
+    // 如果 left_socket 已经关闭
+    // 那么我们应当触发 this.on_close 回调
+    if (this.left_socket_closed) {
+        this.on_close(this)
+    }
+    else {
+        // 关闭 left_socket
         this.left_socket.end()
     }
 }
