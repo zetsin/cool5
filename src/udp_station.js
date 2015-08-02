@@ -57,7 +57,7 @@ function find_or_create_shadow_socket_for(ip, port) {
 	return shadow_socket
 }
 
-function ShadowSocket(ip, port) {debugger
+function ShadowSocket(ip, port) {
 	this.id = next_shadow_socket_id++
 	log.info('[udp_station] shadow_socket[${0}] created', [this.id])
 
@@ -97,9 +97,12 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 	var self = this
 	var backward_id = self.next_backward_id++
 	log.info('[udp_station] shadow_socket[${0}] message length=${1} from ip=${2}, port=${3}', [self.id, chunk.length, rinfo.address, rinfo.port])
+	// 添加头部
+	chunk = gpp.prepend_header([{PV: '1'}, {IP: rinfo.address}, {PORT: rinfo.port}], chunk)
+
 	// 回发要使用全局的 server 套接字来完成
 	log.info('[udp_station] shadow_socket[${0}] backward[${1}] begin length=${2} to ip=${3}, port=${4}', [self.id, backward_id, chunk.length, self.ip, self.port])
-	debugger
+	
 	server.send(chunk, 0, chunk.length, self.port, self.ip, function(err) {
 		if (err) {
 			log.warning('[udp_station] shadow_socket[${0}] backward[${1}] failed length=${2} to ip=${3}, port=${4} ${5}', [self.id, backward_id, chunk.length, self.ip, self.port, err.toString()])

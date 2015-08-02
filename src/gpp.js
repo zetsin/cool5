@@ -7,6 +7,55 @@ var max_size = config.get('gpp.header.max_size')
 
 // 导出
 exports.HeaderParser = HeaderParser
+exports.prepend_header = prepend_header
+
+// header_def_array:
+// [] --> ;;
+// [{k:v}] --> k=v;;
+// [{k1:v1,k2:v2}] --> k1=v1;k2=v2;;
+function prepend_header(header_def_array, chunk) {
+	var header_text = array_to_header(header_def_array)
+	var header_chunk = new Buffer(header_text, 'utf8')
+	return Buffer.concat([header_chunk, chunk])
+}
+
+// [] --> ;;
+// [{k:v}] --> k=v;;
+// [{k1:v1,k2:v2}] --> k1=v1;k2=v2;;
+function array_to_header(array) {
+	if (!Array.isArray(array)) {
+		throw new Error('invalid argument')
+	}
+
+	array = array.map(function(obj) {
+		if (typeof obj !== 'object' || obj === null) {
+			throw new Error('invalid element in array')
+		}
+
+		var list = []
+		for (var k in obj) {
+			if (!obj.hasOwnProperty(k)) continue
+			// 注意 k 中不应当含有等号或分号
+			// obj[k] 中不应当含有分号
+			// 但是这里不检查了
+			list.push(k + '=' + obj[k])
+		}
+		return list.join(';')
+	})
+
+	var t = array.join(';') + ';'
+	if (!/;;$/.test(t)) {
+		t += ';'
+	}
+
+	return t
+}
+
+function test_array_to_header() {
+	assert(array_to_header([]) === ';;')
+	assert(array_to_header([{k: 'v'}]) === 'k=v;;')
+	assert(array_to_header([{k1: 'v1'}, {k2: 'v2'}]) === 'k1=v1;k2=v2;;')
+}
 
 // 这个类用于持续的完成头部解析
 // 由于解析是一个分块处理的过程，因此使用这个类会很方便
