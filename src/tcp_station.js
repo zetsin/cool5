@@ -2,6 +2,7 @@ var config = require('./config')
 var net = require('net')
 var log = require('./log')
 var gpp = require('./gpp')
+var router = require('./router')
 
 var server = null
 var next_tunnel_id = 1
@@ -62,19 +63,8 @@ function Tunnel(left_socket, on_close_listener) {
     this.right_socket_closed = false
     this.on_close = this.on_close_handler.bind(this)
     this.on_close_listener = on_close_listener
-
-    if (config.get('mode') === 'gpp_to_tcpudp') {
-        this.context = {
-            parser: new gpp.HeaderParser(),
-            handler: this.on_left_socket_data_gpp_to_tcpudp_mode_handler.bind(this)
-        }
-    }
-    else if (config.get('mode') === 'gpp_to_gpp') {
-        throw new Error('TODO')
-    }
-    else {
-        throw new Error('Unknown mode')
-    }
+    this.parser = new gpp.HeaderParser()
+    this.left_socket_data_handler = this.on_left_socket_data_parse_header // 从解析 header 开始
 
     log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [this.id, config.get('optimize.tcp_no_delay')])
     if (config.get('optimize.tcp_no_delay') === true) {
@@ -98,56 +88,77 @@ Tunnel.prototype.on_close_handler = function() {
         this.right_socket.removeAllListeners()
         this.right_socket = null
     }
-    this.context = null
+    this.parser = null
     // 通知外部订阅者
     this.on_close_listener(this)
 }
 
 Tunnel.prototype.on_left_socket_data = function(chunk) {
     log.info('[tcp_station] tunnel[${0}] left data length=${1}', [this.id, chunk.length])
-    this.context.handler(chunk)
+    // 交给当前阶段的处理过程去处理
+    if (this.left_socket_data_handler) {
+        this.left_socket_data_handler(chunk)
+    }
+    else {
+        // 丢掉 chunk，忽略
+        log.info('[tcp_station] tunnel[${0}] left data length=${1} dropped cause no handler', [this.id, chunk.length])
+    }
 }
 
-Tunnel.prototype.on_left_socket_data_gpp_to_tcpudp_mode_handler = function(chunk) {
-    var parser = this.context.parser
-    // 头部解析尚未完成吗？
+Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
+    var parser = this.parser
+    var from_ip = this.left_socket.remoteAddress
+    var from_port = this.left_socket.remotePort
+
+    // 继续吃 chunk 来解析
+    parser.eat(chunk)
+
+    // 完成了？
     if (!parser.is_finished()) {
-        // 是的，继续吃 chunk 来解析
-        parser.eat(chunk)
-        // 完成了？
-        if (parser.is_finished()) {
-            // 成功了？
-            if (parser.is_successful()) {
-                var header = parser.get_header()
-                // 可以进行代理中转了
-                log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [this.id, header])
-                this.create_right_socket(header.ip, header.port)
-                // 如果有尾块，要记得发送
-                if (parser.exists_tail_chunk()) {
-                    this.right_socket.write(parser.get_tail_chunk())
-                }
-            }
-            // 失败了
-            else {
-                // 头部错误，强行断开连接
-                log.info('[tcp_station] tunnel[${0}] left header parsed failed', [this.id])
-                this.left_socket.destroy()
-            }    
-        }
         // 还是没完成
-        else {
-            // 没关系，等待下一个数据块
-        }
+        // 没关系，等待下一个数据块
+        return
     }
-    // 头部解析已经完成了
-    // 成功了吗？
-    else if (parser.is_successful()) {
-        // 是的，直接转发数据即可
+
+    // 完成但却失败了？
+    if (!parser.is_successful()) {
+        // 头部错误，强行断开连接
+        log.info('[tcp_station] tunnel[${0}] left header parsed failed', [this.id])
+        this.left_socket.destroy()
+        // 没有后续的处理流程了
+        this.left_socket_data_handler = null
+        return
+    }
+
+    // 头部解析完成了
+    var header = parser.get_header()
+    log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [this.id, header])
+    // 不过我们得问问 router 该转发到哪里
+    var r = router.select_route_for('gpptcp', from_ip, from_port, header)
+    // 检查返回的 protocol 莫返回个不支持的幺蛾子
+    if (r.protocol !== 'gpptcp' && r.protocol !== 'tcp') {
+        throw new Error('invalid protocol: ' + r.protocol)
+    }
+    // 连接远端
+    this.create_right_socket(r.remote_host, r.remote_port)
+    // 如果是 gpptcp 协议我们需要发个 header 过去
+    if (r.protocol === 'gpptcp') {
+        var header_chunk = gpp.array_to_header_chunk([{PV: 1}, {IP: header.ip}, {PORT: header.port}])
+        this.right_socket.write(header_chunk)
+    }
+    // 如果有尾块，要记得发送
+    if (parser.exists_tail_chunk()) {
+        this.right_socket.write(parser.get_tail_chunk())
+    } 
+    // 设置后续处理流程，不管 gpptcp 还是 tcp 都一样
+    this.left_socket_data_handler = this.on_left_socket_data_gpptcp_or_tcp
+}
+
+Tunnel.prototype.on_left_socket_data_gpptcp_or_tcp = function(chunk) {
+    // 转发数据即可
+    // TODO 流量控制
+    if (this.right_socket && !this.right_socket_closed) {
         this.right_socket.write(chunk)
-    }
-    // 失败了，竟然还收到数据？忽略即可
-    else {
-        // 不需要做什么
     }
 }
 

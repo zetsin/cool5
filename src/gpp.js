@@ -19,6 +19,12 @@ function prepend_header(header_def_array, chunk) {
 	return Buffer.concat([header_chunk, chunk])
 }
 
+function array_to_header_chunk(array) {
+	var header_text = array_to_header(array)
+	var header_chunk = new Buffer(header_text, 'utf8')
+	return header_chunk
+}
+
 // [] --> ;;
 // [{k:v}] --> k=v;;
 // [{k1:v1,k2:v2}] --> k1=v1;k2=v2;;
