@@ -8,6 +8,7 @@ var max_size = config.get('gpp.header.max_size')
 // 导出
 exports.HeaderParser = HeaderParser
 exports.prepend_header = prepend_header
+exports.array_to_header_chunk = array_to_header_chunk
 
 // header_def_array:
 // [] --> ;;
