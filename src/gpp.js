@@ -125,8 +125,15 @@ HeaderParser.prototype.eat = function(chunk) {
 			self.header_chunk = chunk
 		}
 		// 转换为字符串进行解析
-		var header_text = self.header_chunk.toString('utf8')
-		self.header = parse_header_text(header_text)
+		try {
+			var header_text = self.header_chunk.toString('utf8')
+			self.header = parse_header_text(header_text)			
+		}
+		catch (err) {
+			// 失败了
+			self.status = -1
+			return
+		}
 		// 成功了
 		self.status = 2
 	}
@@ -193,7 +200,16 @@ function parse_header_text(text) {
 		header[p.name.toLowerCase()] = p.value
 	})
 	// 返回结果
-	return header
+	return validate(header)
+
+	function validate(header) {
+		if (!header.pv) {
+			throw new Error('invalid header, pv not found')
+		}
+		else {
+			return header
+		}
+	}
 }
 
 // 将一个 chunk 从指定位置 i 处分为两个 chunk
