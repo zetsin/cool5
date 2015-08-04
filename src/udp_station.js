@@ -47,7 +47,7 @@ exports.start = function() {
 			}
 			// 我们需要一个 shadow_socket 来完成数据转发
 			var shadow_socket = find_or_create_shadow_socket_for(r.protocol, rinfo.address, rinfo.port)
-			shadow_socket.forward(message_without_header, header.ip, header.port)
+			shadow_socket.forward(header, message_without_header, r.remote_host, r.remote_port)
 		}
 	})
 }
@@ -97,20 +97,21 @@ ShadowSocket.prototype.log = function(type, args) {
 	log[type].apply(log, args)
 }
 
-ShadowSocket.prototype.forward = function(chunk, to_ip, to_port) {
+ShadowSocket.prototype.forward = function(chunk_header, chunk, next_ip, next_port) {
 	var self = this
 	var forward_id = self.next_forward_id++
+
 	// 第一次调用 send 时将会自动绑定到 0.0.0.0 的一个随机端口
 	if (self.protocol === 'udp') {
-		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3}', [forward_id, chunk.length, to_ip, to_port])
-		this.socket.send(chunk, 0, chunk.length, to_port, to_ip, send_cb)
+		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3}', [forward_id, chunk.length, next_ip, next_port])
+		this.socket.send(chunk, 0, chunk.length, next_port, next_ip, send_cb)
 	}
 	else if (self.protocol === 'gppudp') {
 		// 附加包头
-		var header = {pv: 1, ip: to_ip, port: to_port}
-		var new_chunk = gpp.prepend_header([{PV: header.pv}, {IP: header.ip}, {PORT: header.port}], chunk)
-		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3} with header ${4|json}', [forward_id, chunk.length, to_ip, to_port, header])
-		this.socket.send(new_chunk, 0, new_chunk.length, to_port, to_ip, send_cb)
+		var new_chunk_header = {pv: 1, ip: chunk_header.ip, port: chunk_header.port}
+		var new_chunk = gpp.prepend_header([{PV: new_chunk_header.pv}, {IP: new_chunk_header.ip}, {PORT: new_chunk_header.port}], chunk)
+		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3} via ip=${4}, port=${5} with header ${6|json}', [forward_id, chunk.length, chunk_header.ip, chunk_header.port, next_ip, next_port, new_chunk_header])
+		this.socket.send(new_chunk, 0, new_chunk.length, next_port, next_ip, send_cb)
 	}
 	else {
 		throw new Error('stupid programmer')
