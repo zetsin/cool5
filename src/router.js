@@ -7,7 +7,7 @@ exports.select_route_for = function(protocol, from_ip, from_port, header) {
 	if (protocol !== 'gpptcp' && protocol !== 'gppudp') {
 		throw new Error('invalid arguments, protocol must be gpptcp or gppudp')
 	}
-debugger
+
 	// 如果当前模式为 gpp_to_tcpudp 那么就直接转发好了
 	if (mode === 'gpp_to_tcpudp') {
 		return {
