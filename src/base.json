@@ -1,9 +1,9 @@
 {
 	"mode": "gpp_to_tcpudp",
 	"gpp.header.max_size": "128",
-	"local.tcp.host": "127.0.0.1",
+	"local.tcp.host": "0.0.0.0",
 	"local.tcp.port": "32100",
-	"local.udp.host": "127.0.0.1",
+	"local.udp.host": "0.0.0.0",
 	"local.udp.port": "32200",
 	"pool.enabled": true,
 	"pool.capacity": 24,
