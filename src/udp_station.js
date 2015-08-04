@@ -107,7 +107,8 @@ ShadowSocket.prototype.forward = function(chunk, to_ip, to_port) {
 	}
 	else if (self.protocol === 'gppudp') {
 		// 附加包头
-		var new_chunk = gpp.prepend_header([{PV: 1}, {IP: to_ip}, {PORT: to_port}], chunk)
+		var header = {pv: 1, ip: to_ip, port: to_port}
+		var new_chunk = gpp.prepend_header([{PV: header.pv}, {IP: header.ip}, {PORT: header.port}], chunk)
 		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3} with header ${4|json}', [forward_id, chunk.length, to_ip, to_port, header])
 		this.socket.send(new_chunk, 0, new_chunk.length, to_port, to_ip, send_cb)
 	}
@@ -128,7 +129,7 @@ ShadowSocket.prototype.forward = function(chunk, to_ip, to_port) {
 ShadowSocket.prototype.on_listening = function() {
 	var ip = this.socket.address().address
 	var port = this.socket.address().port
-	this.log_info('listening ip=${1}, port=${2}', [ip, port])
+	this.log_info('listening ip=${0}, port=${1}', [ip, port])
 }
 
 ShadowSocket.prototype.on_message = function(chunk, rinfo) {
