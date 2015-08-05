@@ -99,10 +99,10 @@ Tunnel.prototype.on_left_socket_data = function(chunk) {
     if (this.left_socket_data_handler) {
         this.left_socket_data_handler(chunk)
     }
-    else {
-        // 丢掉 chunk，忽略
-        log.info('[tcp_station] tunnel[${0}] left data length=${1} dropped cause no handler', [this.id, chunk.length])
-    }
+    // else {
+    //     // 丢掉 chunk，忽略
+    //     log.info('[tcp_station] tunnel[${0}] left data length=${1} dropped cause no handler', [this.id, chunk.length])
+    // }
 }
 
 Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
@@ -149,17 +149,13 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 如果有尾块，要记得发送
     if (parser.exists_tail_chunk()) {
         this.right_socket.write(parser.get_tail_chunk())
-    } 
-    // 设置后续处理流程，不管 gpptcp 还是 tcp 都一样
-    this.left_socket_data_handler = this.on_left_socket_data_gpptcp_or_tcp
-}
-
-Tunnel.prototype.on_left_socket_data_gpptcp_or_tcp = function(chunk) {
-    // 转发数据即可
-    // TODO 流量控制
-    if (this.right_socket && !this.right_socket_closed) {
-        this.right_socket.write(chunk)
     }
+    // 设置后续处理流程，不管 gpptcp 还是 tcp 都一样
+    // 不再对数据进行处理
+    this.left_socket_data_handler = null
+    // 左右开始相互 pipe
+    this.left_socket.pipe(this.right_socket)
+    this.right_socket.pipe(this.left_socket)
 }
 
 Tunnel.prototype.on_left_socket_error = function(err) {
@@ -179,11 +175,6 @@ Tunnel.prototype.on_left_socket_close = function() {
     if (!this.right_socket || this.right_socket_closed) {
         //log.info('[tcp_station] tunnel[${0}] DEBUG-1 this.right_socket=${1} this.right_socket_closed=${2}', [this.id, (this.right_socket && true).toString(), this.right_socket_closed.toString()])
         this.on_close(this)
-    }
-    else {
-        //log.info('[tcp_station] tunnel[${0}] DEBUG-2 this.right_socket=${1} this.right_socket_closed=${2}', [this.id, (this.right_socket && true).toString(), this.right_socket_closed.toString()])
-        // 关闭 right_socket
-        this.right_socket.end()
     }
 }
 
@@ -208,8 +199,6 @@ Tunnel.prototype.on_right_socket_connect = function() {
 
 Tunnel.prototype.on_right_socket_data = function(chunk) {
     log.info('[tcp_station] tunnel[${0}] right data length=${1}', [this.id, chunk.length])
-    // 转发数据
-    this.left_socket.write(chunk)
 }
 
 Tunnel.prototype.on_right_socket_error = function(err) {
@@ -227,9 +216,5 @@ Tunnel.prototype.on_right_socket_close = function() {
     // 那么我们应当触发 this.on_close 回调
     if (this.left_socket_closed) {
         this.on_close(this)
-    }
-    else {
-        // 关闭 left_socket
-        this.left_socket.end()
     }
 }
