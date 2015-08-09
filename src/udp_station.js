@@ -139,6 +139,7 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 	var backward_chunk
 
 	self.log_info('message length=${0} from ip=${1}, port=${2}', [chunk.length, rinfo.address, rinfo.port])
+	//self.log_info('backward[${0}] input chunk: ${1}', [backward_id, chunk.toString('hex')])
 
 	if (self.protocol === 'udp') {
 		// 添加头部
@@ -158,17 +159,16 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 		// 获取尾块，这才是真正的数据主体
 		var chunk_without_header = parser.exists_tail_chunk() ? parser.get_tail_chunk() : new Buffer(0)
 		// 准备回发前要添加头部
-		backward_chunk = gpp.prepend_header([{PV: '1'}, {IP: rinfo.address}, {PORT: rinfo.port}], chunk_without_header)
+		backward_chunk = gpp.prepend_header([{PV: '1'}, {IP: header.ip}, {PORT: header.port}], chunk_without_header)
 
-		self.log_info('backward[${0}] input chunk with header: ${1}', [backward_id, chunk.toString('hex')])
-		self.log_info('backward[${0}] input chunk without header: ${1}', [backward_id, chunk_without_header.toString('hex')])
-		self.log_info('backward[${0}] output chunk with header: ${1}', [backward_id, backward_chunk.toString('hex')])
+		//self.log_info('backward[${0}] input chunk without header: ${1}', [backward_id, chunk_without_header.toString('hex')])
 	}
 	else {
 		throw new Error('stupid programmer')
 	}
 
 	// 回发要使用全局的 server 套接字来完成
+	//self.log_info('backward[${0}] output chunk: ${1}', [backward_id, backward_chunk.toString('hex')])
 	self.log_info('backward[${0}] begin length=${1} to ip=${2}, port=${3}', [backward_id, backward_chunk.length, self.ip, self.port])
 	server.send(backward_chunk, 0, backward_chunk.length, self.port, self.ip, send_cb)
 
