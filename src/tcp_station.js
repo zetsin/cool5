@@ -186,6 +186,7 @@ Tunnel.prototype.create_right_socket = function(host, port) {
     }
     //this.right_socket = net.connect(80)
     // 订阅各个事件
+    log.info('[tcp_station] tunnel[${0}] right connect begin to host=${1}, port=${2}', [this.id, host, port])
     this.right_socket.on('connect', this.on_right_socket_connect.bind(this))
     this.right_socket.on('data', this.on_right_socket_data.bind(this))
     this.right_socket.on('error', this.on_right_socket_error.bind(this))
@@ -194,7 +195,7 @@ Tunnel.prototype.create_right_socket = function(host, port) {
 }
 
 Tunnel.prototype.on_right_socket_connect = function() {
-    log.info('[tcp_station] tunnel[${0}] right connect', [this.id])
+    log.info('[tcp_station] tunnel[${0}] right connect ok', [this.id])
 }
 
 Tunnel.prototype.on_right_socket_data = function(chunk) {
