@@ -109,14 +109,15 @@ function log(level, text) {
     }
 }
 
-function dateTimeStr(dateTime, local) {
+function dateTimeStr(dateTime) {
     return tstr('${date} ${time}', {
-        date: dateStr(dateTime, local),
-        time: timeStr(dateTime, local)
+        date: dateStr(dateTime),
+        time: timeStr(dateTime)
     })
 }
 
-function dateStr(dateTime, local) {
+function dateStr(dateTime) {
+    var local = true
     var year = local ? dateTime.getFullYear() : dateTime.getUTCFullYear()
     var month = (local ? dateTime.getMonth() : dateTime.getUTCMonth()) + 1
     var date = local ? dateTime.getDate() : dateTime.getUTCDate()
@@ -127,7 +128,8 @@ function dateStr(dateTime, local) {
     })
 }
 
-function timeStr(dateTime, local) {
+function timeStr(dateTime) {
+    var local = true
     var h = local ? dateTime.getHours() : dateTime.getUTCHours()
     var m = local ? dateTime.getMinutes() : dateTime.getUTCMinutes()
     var s = local ? dateTime.getSeconds() : dateTime.getUTCSeconds()
