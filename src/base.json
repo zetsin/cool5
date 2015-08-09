@@ -5,13 +5,7 @@
 	"local.tcp.port": "32100",
 	"local.udp.host": "0.0.0.0",
 	"local.udp.port": "32200",
-	"pool.enabled": true,
-	"pool.capacity": 24,
-	"pool.expiration": 60,
 	"log.enabled": false,
 	"log.directory": "./log",
-	"obzvr.enabled": false,
-	"obzvr.host": "127.0.0.1",
-	"obzvr.port": 29988,
 	"optimize.tcp_no_delay": true
 }
