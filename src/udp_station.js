@@ -159,6 +159,10 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 		var chunk_without_header = parser.exists_tail_chunk() ? parser.get_tail_chunk() : new Buffer(0)
 		// 准备回发前要添加头部
 		backward_chunk = gpp.prepend_header([{PV: '1'}, {IP: rinfo.address}, {PORT: rinfo.port}], chunk_without_header)
+
+		self.log_info('backward[${0}] input chunk with header: ${1}', [backward_id, chunk.toString('hex')])
+		self.log_info('backward[${0}] input chunk without header: ${1}', [backward_id, chunk_without_header.toString('hex')])
+		self.log_info('backward[${0}] output chunk with header: ${1}', [backward_id, backward_chunk.toString('hex')])
 	}
 	else {
 		throw new Error('stupid programmer')
