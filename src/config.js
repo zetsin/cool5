@@ -35,9 +35,20 @@ function load_user_config() {
 	var yargs = require('yargs')
 	var argv = yargs
 					.usage('Usage: $0 [options]')
-					.demand('c').alias('c', 'config').describe('c', 'config file name')
+					.option('c', {
+							alias: 'config',
+							demand: false,
+							describe: 'config file name',
+							type: 'string'
+						})
 					.help('h').alias('h', 'help')
 					.argv
+
+	// no user config file? it's ok
+	if (!argv.c) {
+		user_config = {}
+		return		
+	}
 
 	// load user config file
 	// if failed, application can not start up
