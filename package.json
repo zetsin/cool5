@@ -1,7 +1,7 @@
 {
   "name": "cool5",
-  "version": "1.0.4",
-  "description": "Socks5 Proxy's Proxy",
+  "version": "1.0.5",
+  "description": "TCP/UDP Proxy",
   "main": "src/cool5.js",
   "bin": {
     "cool5": "./cli.js"
@@ -14,7 +14,7 @@
     "url": "https://github.com/zetsingithub/cool5"
   },
   "keywords": [
-    "socks5"
+    "proxy"
   ],
   "contributors": [
     "Jinquan Liu (https://github.com/zetsingithub)",
