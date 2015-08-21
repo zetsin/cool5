@@ -9,6 +9,11 @@ load_user_config()
 generate_final_config()
 
 function load_base_config() {
+	if (global.base_config) {
+		base_config = global.base_config
+		return
+	}
+
 	// load base config file first
 	// if failed, application can not start up
 	try {
@@ -22,6 +27,11 @@ function load_base_config() {
 }
 
 function load_user_config() {
+	if (global.user_config) {
+		user_config = global.user_config
+		return
+	}
+
 	var yargs = require('yargs')
 	var argv = yargs
 					.usage('Usage: $0 [options]')
