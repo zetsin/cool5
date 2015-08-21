@@ -1,42 +1,56 @@
 var path = require('path')
 
-// load base config file first
-// if failed, application can not start up
-try {
-	var base_config = load_config(relative_current_dir('./base.json'))
-}
-catch (err) {
-	// print info and exit the application
-	console.log('[config] load base config file failed: base.json')
-	process.exit(1)
-}
+var base_config
+var user_config
+var final_config
 
-var yargs = require('yargs')
-var argv = yargs
-				.usage('Usage: $0 [options]')
-				.demand('c').alias('c', 'config').describe('c', 'config file name')
-				.help('h').alias('h', 'help')
-				.argv
+load_base_config()
+load_user_config()
+generate_final_config()
 
-// load user config file
-// if failed, application can not start up
-try {
-	var user_config_file = path.resolve(argv.c)
-	var user_config = load_config(user_config_file)
-}
-catch (err) {
-	// print info and exit the application
-	console.log('[config] load config file failed: ' + user_config_file)
-	process.exit(1)
+function load_base_config() {
+	// load base config file first
+	// if failed, application can not start up
+	try {
+		base_config = load_config(relative_current_dir('./base.json'))
+	}
+	catch (err) {
+		// print info and exit the application
+		console.log('[config] load base config file failed: base.json')
+		process.exit(1)
+	}
 }
 
-// we user prototype link to implement overriding,
-// override relationship (left override right) is:
-// final_config --> user_config --> base_config
+function load_user_config() {
+	var yargs = require('yargs')
+	var argv = yargs
+					.usage('Usage: $0 [options]')
+					.demand('c').alias('c', 'config').describe('c', 'config file name')
+					.help('h').alias('h', 'help')
+					.argv
 
-var final_config = combine(base_config, user_config)
-print_config(final_config)
-check_config(final_config)
+	// load user config file
+	// if failed, application can not start up
+	try {
+		var user_config_file = path.resolve(argv.c)
+		user_config = load_config(user_config_file)
+	}
+	catch (err) {
+		// print info and exit the application
+		console.log('[config] load config file failed: ' + user_config_file)
+		process.exit(1)
+	}	
+}
+
+function generate_final_config() {
+	// we user prototype link to implement overriding,
+	// override relationship (left override right) is:
+	// final_config --> user_config --> base_config
+
+	final_config = combine(base_config, user_config)
+	print_config(final_config)
+	check_config(final_config)
+}
 
 // ok, we can export the final_config via our 'get' function on this module
 // we don't expose the final_config object to outside because we don't permit any module
