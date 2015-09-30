@@ -183,9 +183,9 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 }
 
 ShadowSocket.prototype.on_error = function(err) {
-    self.log_warning('error ${0}', [err.toString()])	
+    this.log_warning('error ${0}', [err.toString()])	
 }
 
 ShadowSocket.prototype.on_close = function() {
-	self.log_info('close')
+	this.log_info('close')
 }
