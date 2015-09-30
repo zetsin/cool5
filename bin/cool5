@@ -1,3 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/node
+
 var cool5 = require('../src/cool5')
 cool5.start()
