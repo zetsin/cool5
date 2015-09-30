@@ -1,32 +1,32 @@
 {
-  "name": "cool5",
-  "version": "1.0.6",
-  "description": "TCP/UDP Proxy",
-  "main": "src/cool5.js",
-  "bin": {
-    "cool5": "./cli.js"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/zetsingithub/cool5"
-  },
-  "keywords": [
-    "proxy"
-  ],
-  "contributors": [
-    "Jinquan Liu (https://github.com/zetsingithub)",
-    "Jianru Lin <jianru.lin@gmail.com> (https://github.com/Jianru-Lin)"
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/zetsingithub/cool5/issues"
-  },
-  "homepage": "https://github.com/zetsingithub/cool5",
-  "dependencies": {
-    "mkdirp": "^0.5.0",
-    "yargs": "^3.7.1"
-  }
+    "name": "cool5",
+    "version": "1.1.0",
+    "description": "TCP/UDP Proxy",
+    "main": "src/cool5.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/zetsingithub/cool5"
+    },
+    "keywords": [
+        "proxy"
+    ],
+    "contributors": [
+        "Jinquan Liu (https://github.com/zetsingithub)",
+        "Jianru Lin <jianru.lin@gmail.com> (https://github.com/Jianru-Lin)"
+    ],
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/zetsingithub/cool5/issues"
+    },
+    "homepage": "https://github.com/zetsingithub/cool5",
+    "dependencies": {
+        "mkdirp": "^0.5.0",
+        "yargs": "^3.7.1"
+    },
+    "bin": {
+        "cool5": "bin/cool5"
+    }
 }
