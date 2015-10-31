@@ -40,6 +40,21 @@ exports.select_route_for = function(protocol, from_ip, from_port, header) {
 	// 如果当前模式为 gpp_to_dynamic 则需要根据各项参数动态决定
 	else if (mode === 'gpp_to_dynamic') {
 		// 在这里我们可以根据各种信息动态决定
-		throw new Error('TODO')
+		// 目前根据 proxy_ip 和 proxy_port 决定，如果存在则 gpp 转发
+		// 否则普通直连
+		if (header.proxy_ip && header.proxy_port) {
+			return {
+				protocol: protocol, // 协议保持不变
+				remote_host: header.proxy_ip,
+				remote_port: header.proxy_port
+			}
+		}
+		else {
+			return {
+				protocol: protocol === 'gpptcp' ? 'tcp' : 'udp',
+				remote_host: header.ip,
+				remote_port: header.port
+			}
+		}
 	}
 }

@@ -1,5 +1,5 @@
 {
-	"mode": "gpp_to_tcpudp",
+	"mode": "gpp_to_dynamic",
 	"gpp.header.max_size": "128",
 	"local.tcp.host": "0.0.0.0",
 	"local.tcp.port": "32100",
