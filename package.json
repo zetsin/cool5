@@ -1,6 +1,6 @@
 {
     "name": "cool5",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "TCP/UDP Proxy",
     "main": "src/cool5.js",
     "scripts": {
