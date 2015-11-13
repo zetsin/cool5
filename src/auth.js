@@ -13,7 +13,7 @@ exports.exec = function(header) {
 	}
 
 	var forward = null
-	if (config.get('auth.forward')) {
+	if (ok && config.get('auth.forward')) {
 		forward = {
 			auth: header.auth
 		}
