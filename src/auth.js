@@ -10,7 +10,7 @@ exports.exec = function(header) {
 	}
 	else {
 		// TODO
-		ok = false
+		ok = true
 	}
 
 	var forward = null
