@@ -6,7 +6,7 @@
 	"local.udp.host": "0.0.0.0",
 	"local.udp.port": "32200",
 	"auth.verify": false,
-	"auth.forward": false,
+	"auth.forward": true,
 	"log.enabled": false,
 	"log.directory": "./log",
 	"optimize.tcp_no_delay": true

@@ -1,4 +1,5 @@
 var config = require('./config')
+var log = require('./log')
 
 // return: {ok: <boolean>, forward: <gpp-header>}
 exports.exec = function(header) {
@@ -13,7 +14,7 @@ exports.exec = function(header) {
 	}
 
 	var forward = null
-	if (ok && config.get('auth.forward')) {
+	if (ok && config.get('auth.forward') && header.auth) {
 		forward = {
 			auth: header.auth
 		}
