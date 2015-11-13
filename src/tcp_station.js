@@ -2,6 +2,7 @@ var config = require('./config')
 var net = require('net')
 var log = require('./log')
 var gpp = require('./gpp')
+var auth = require('./auth')
 var router = require('./router')
 
 var server = null
@@ -133,7 +134,18 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 头部解析完成了
     var header = parser.get_header()
     log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [this.id, header])
-    // 不过我们得问问 router 该转发到哪里
+    // 进行下一步之前，先进行身份认证
+    var auth_result = auth.exec(header)
+    if (!auth_result) {
+        // 身份失败，直接断开连接
+        log.warning('[tcp_station] auth failed, disconnect immediately without any service')
+        // 断开
+        this.left_socket.destroy()
+        // 没有后续的处理流程了
+        this.left_socket_data_handler = null
+        return
+    }
+    // 接下来我们得问问 router 该转发到哪里
     var r = router.select_route_for('gpptcp', from_ip, from_port, header)
     // 检查返回的 protocol 莫返回个不支持的幺蛾子
     if (r.protocol !== 'gpptcp' && r.protocol !== 'tcp') {
@@ -142,8 +154,14 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 连接远端
     this.create_right_socket(r.remote_host, r.remote_port)
     // 如果是 gpptcp 协议我们需要发个 header 过去
+    // 哦，别忘了如果 auth_result 里面有 forward 的内容的话，就要作 forward
     if (r.protocol === 'gpptcp') {
-        var header_chunk = gpp.array_to_header_chunk([{PV: 1}, {IP: header.ip}, {PORT: header.port}])
+        if (auth_result.forward) {
+            var header_chunk = gpp.array_to_header_chunk([{PV: 1}, {IP: header.ip}, {PORT: header.port}, auth_result.forward])
+        }
+        else {
+            var header_chunk = gpp.array_to_header_chunk([{PV: 1}, {IP: header.ip}, {PORT: header.port}])            
+        }
         this.right_socket.write(header_chunk)
     }
     // 如果有尾块，要记得发送

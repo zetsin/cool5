@@ -9,6 +9,7 @@ var max_size = config.get('gpp.header.max_size')
 exports.HeaderParser = HeaderParser
 exports.prepend_header = prepend_header
 exports.array_to_header_chunk = array_to_header_chunk
+exports.merge = merge
 
 // header_def_array:
 // [] --> ;;
@@ -56,6 +57,20 @@ function array_to_header(array) {
 	}
 
 	return t
+}
+
+// meger all the objects and return combined result
+// won't modify any input object
+function merge() {
+	var result = {}
+	for (var i = 0; i < arguments.length; ++i) {
+		var o = arguments[i]
+		if (typeof o !== 'object' || o === null) continue
+		for (var key in o) {
+			if (o.hasOwnProperty(key)) result[key] = o[key]
+		}
+	}
+	return result
 }
 
 function test_array_to_header() {

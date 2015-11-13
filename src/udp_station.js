@@ -2,6 +2,7 @@ var config = require('./config')
 var dgram = require('dgram')
 var log = require('./log')
 var gpp = require('./gpp')
+var auth = require('./auth')
 var router = require('./router')
 
 var server = null
@@ -39,6 +40,14 @@ exports.start = function() {
 			var header = parser.get_header()
 			var message_without_header = parser.exists_tail_chunk() ? parser.get_tail_chunk() : new Buffer(0)
 			log.info('[udp_station] server message length=${0} from ip=${1}, port=${2} header parsed ${3|json}', [message.length, rinfo.address, rinfo.port, header])
+		    // 进行下一步之前，先进行身份认证
+		    var auth_result = auth.exec(header)
+		    if (!auth_result) {
+		        // 身份失败，直接丢弃包
+		        log.warning('[udp_station] auth failed, drop packet immediately without any service')
+		        // 没有后续的处理流程了
+		        return
+		    }
 			// 我们需要问询 router 应该如何转发这个包
 			var r = router.select_route_for('gppudp', rinfo.address, rinfo.port, header)
 			// router 可别告诉我一个我不支持的协议，那我就不高兴了
@@ -46,8 +55,9 @@ exports.start = function() {
 				throw new Error('invalid protocol' + r.protocol)
 			}
 			// 我们需要一个 shadow_socket 来完成数据转发
+			// 哦，别忘了如果 auth_result 里面有 forward 的内容的话，就要作 forward
 			var shadow_socket = find_or_create_shadow_socket_for(r.protocol, rinfo.address, rinfo.port)
-			shadow_socket.forward(header, message_without_header, r.remote_host, r.remote_port)
+			shadow_socket.forward(gpp.merge(header, auth_result.forward), message_without_header, r.remote_host, r.remote_port)
 		}
 	})
 }

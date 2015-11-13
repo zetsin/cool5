@@ -1,20 +1,5 @@
 var config = require('./config')
 
-// if auth is not enabled, return ok and forward nothing
-if (!config.get('auth.enabled')) {
-	exports.exec = function(header) {
-		return {
-			ok: true,
-			forward: null
-		}
-	}
-}
-else if (config.get('auth.mode') === '') {
-
-
-}
-
-
 // return: {ok: <boolean>, forward: <gpp-header>}
 exports.exec = function(header) {
 
