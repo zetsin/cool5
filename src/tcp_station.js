@@ -136,7 +136,7 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [this.id, header])
     // 进行下一步之前，先进行身份认证
     var auth_result = auth.exec(header)
-    if (!auth_result) {
+    if (!auth_result.ok) {
         // 身份失败，直接断开连接
         log.warning('[tcp_station] auth failed, disconnect immediately without any service')
         // 断开

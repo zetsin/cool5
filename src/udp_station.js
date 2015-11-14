@@ -42,7 +42,7 @@ exports.start = function() {
 			log.info('[udp_station] server message length=${0} from ip=${1}, port=${2} header parsed ${3|json}', [message.length, rinfo.address, rinfo.port, header])
 		    // 进行下一步之前，先进行身份认证
 		    var auth_result = auth.exec(header)
-		    if (!auth_result) {
+		    if (!auth_result.ok) {
 		        // 身份失败，直接丢弃包
 		        log.warning('[udp_station] auth failed, drop packet immediately without any service')
 		        // 没有后续的处理流程了
