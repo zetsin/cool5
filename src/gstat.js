@@ -87,12 +87,26 @@ TunnelStat.prototype.add_right_out = function(len, via_proxy) {
 // UDP 的统计比较简单，不需要建立 TunnelStat 这样的类级抽象
 // 直接提供两个接口即可，如下
 
-function ShadowSocketStat(gmid, via_proxy) {
+exports.add_udp_backward = function(gmid, len, via_proxy) {
+	if (!stat_by_gmid.hasOwnProperty(gmid)) {
+		stat_by_gmid[gmid] = new_item()
+	}
 
+	stat_by_gmid[gmid].udp_backward += len
+	if (via_proxy) {
+		stat_by_gmid[gmid].udp_backward_via_proxy += len
+	}
 }
 
-ShadowSocketStat.prototype.add_left_in = function(len) {
+exports.add_udp_forward = function(gmid, len, via_proxy) {
+	if (!stat_by_gmid.hasOwnProperty(gmid)) {
+		stat_by_gmid[gmid] = new_item()
+	}
 
+	stat_by_gmid[gmid].udp_forward += len
+	if (via_proxy) {
+		stat_by_gmid[gmid].udp_forward_via_proxy += len
+	}
 }
 
 exports.udp_forward = function(header, len, via_proxy) {
@@ -132,28 +146,6 @@ function add_tcp_forward(gmid, len, via_proxy) {
 	stat_by_gmid[gmid].tcp_forward += len
 	if (via_proxy) {
 		stat_by_gmid[gmid].tcp_forward_via_proxy += len
-	}
-}
-
-function add_udp_backward(gmid, len, via_proxy) {
-	if (!stat_by_gmid.hasOwnProperty(gmid)) {
-		stat_by_gmid[gmid] = new_item()
-	}
-
-	stat_by_gmid[gmid].udp_backward += len
-	if (via_proxy) {
-		stat_by_gmid[gmid].udp_backward_via_proxy += len
-	}
-}
-
-function add_udp_forward(gmid, len, via_proxy) {
-	if (!stat_by_gmid.hasOwnProperty(gmid)) {
-		stat_by_gmid[gmid] = new_item()
-	}
-
-	stat_by_gmid[gmid].udp_forward += len
-	if (via_proxy) {
-		stat_by_gmid[gmid].udp_forward_via_proxy += len
 	}
 }
 

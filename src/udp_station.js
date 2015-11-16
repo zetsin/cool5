@@ -80,6 +80,7 @@ function ShadowSocket(protocol, ip, port) {
 	this.id = next_shadow_socket_id++
 	this.protocol = protocol
 	this.via_proxy = (protocol === 'gppudp')
+	this.gmid = undefined
 	this.ip = ip
 	this.port = port
 	this.socket = dgram.createSocket('udp4')
@@ -113,6 +114,14 @@ ShadowSocket.prototype.forward = function(chunk_header, chunk, next_ip, next_por
 	var self = this
 	var forward_id = self.next_forward_id++
 
+	// 记录下 gmid
+	// 按理来说，gmid 不应当出现多次修改的情况，但这种情况也不是完全不可能出现
+	// 因此这里作一个警告
+	if (self.gmid !== undefined && self.gmid !== chunk_header.gmid) {
+		self.log_info('forward[${0}] gmid rewrite from ${1} to ${2}', [forward_id, self.gmid, chunk_header.gmid])
+	}
+	self.gmid = chunk_header.gmid
+
 	// 第一次调用 send 时将会自动绑定到 0.0.0.0 的一个随机端口
 	if (self.protocol === 'udp') {
 		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3}', [forward_id, chunk.length, next_ip, next_port])
@@ -125,9 +134,7 @@ ShadowSocket.prototype.forward = function(chunk_header, chunk, next_ip, next_por
 		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3} via ip=${4}, port=${5} with header ${6|json}', [forward_id, chunk.length, chunk_header.ip, chunk_header.port, next_ip, next_port, new_chunk_header])
 		this.socket.send(new_chunk, 0, new_chunk.length, next_port, next_ip, send_cb)
 		// 统计
-		// 注意 header 传进去的是原始的 header，但是尺寸是最后修改 header 后发出的尺寸
-		// 这是因为 gmid 只在原始的 header 里有，我们不转发
-		//gstat.udp_forward(chunk_header, new_chunk.length, self.via_proxy)
+		gstat.add_udp_forward(self.gmid, new_chunk.length, self.via_proxy)
 	}
 	else {
 		throw new Error('stupid programmer')
@@ -189,7 +196,7 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 	server.send(backward_chunk, 0, backward_chunk.length, self.port, self.ip, send_cb)
 
 	// 统计
-	//gstat.udp_backward()
+	gstat.add_udp_backward(self.gmid, backward_chunk.length, self.via_proxy)
 
 	function send_cb(err) {
 		if (err) {
