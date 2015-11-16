@@ -127,6 +127,10 @@ exports.query_all = function() {
 	return stat_by_gmid
 }
 
+exports.reset = function(gmid) {
+	stat_by_gmid[gmid] = new_item()
+}
+
 function add_tcp_backward(gmid, len, via_proxy) {
 	if (!stat_by_gmid.hasOwnProperty(gmid)) {
 		stat_by_gmid[gmid] = new_item()
