@@ -4,6 +4,7 @@ var log = require('./log')
 var gpp = require('./gpp')
 var auth = require('./auth')
 var router = require('./router')
+var gstat = require('./gstat')
 
 var server = null
 var shadow_socket_map = {}
@@ -78,6 +79,7 @@ function find_or_create_shadow_socket_for(protocol, ip, port) {
 function ShadowSocket(protocol, ip, port) {
 	this.id = next_shadow_socket_id++
 	this.protocol = protocol
+	this.via_proxy = (protocol === 'gppudp')
 	this.ip = ip
 	this.port = port
 	this.socket = dgram.createSocket('udp4')
@@ -122,6 +124,10 @@ ShadowSocket.prototype.forward = function(chunk_header, chunk, next_ip, next_por
 		var new_chunk = gpp.prepend_header([{PV: new_chunk_header.pv}, {IP: new_chunk_header.ip}, {PORT: new_chunk_header.port}], chunk)
 		self.log_info('forward[${0}] begin length=${1} to ip=${2}, port=${3} via ip=${4}, port=${5} with header ${6|json}', [forward_id, chunk.length, chunk_header.ip, chunk_header.port, next_ip, next_port, new_chunk_header])
 		this.socket.send(new_chunk, 0, new_chunk.length, next_port, next_ip, send_cb)
+		// 统计
+		// 注意 header 传进去的是原始的 header，但是尺寸是最后修改 header 后发出的尺寸
+		// 这是因为 gmid 只在原始的 header 里有，我们不转发
+		//gstat.udp_forward(chunk_header, new_chunk.length, self.via_proxy)
 	}
 	else {
 		throw new Error('stupid programmer')
@@ -181,6 +187,9 @@ ShadowSocket.prototype.on_message = function(chunk, rinfo) {
 	//self.log_info('backward[${0}] output chunk: ${1}', [backward_id, backward_chunk.toString('hex')])
 	self.log_info('backward[${0}] begin length=${1} to ip=${2}, port=${3}', [backward_id, backward_chunk.length, self.ip, self.port])
 	server.send(backward_chunk, 0, backward_chunk.length, self.port, self.ip, send_cb)
+
+	// 统计
+	//gstat.udp_backward()
 
 	function send_cb(err) {
 		if (err) {

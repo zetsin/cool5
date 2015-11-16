@@ -54,8 +54,8 @@ TunnelStat.prototype.set_header = function(header) {
 	this.gmid = header.gmid
 
 	// 把当前统计值更新到 stat_by_gmid 里
-	tcp_forward(this.gmid, this.right_out)
-	tcp_backward(this.gmid, this.right_in)
+	add_tcp_forward(this.gmid, this.right_out)
+	add_tcp_backward(this.gmid, this.right_in)
 }
 
 TunnelStat.prototype.add_left_in = function(len) {
@@ -71,10 +71,8 @@ TunnelStat.prototype.add_right_in = function(len, via_proxy) {
 	if (via_proxy) {
 		this.right_in_via_proxy += len
 	}
-	if (this.gmid !== undefined) {
-		tcp_backward(this.gmid, this.right_in)
-		tcp_backward_via_proxy(this.gmid, this.right_in_via_proxy)
-	}
+	if (this.gmid === undefined) return
+	add_tcp_backward(this.gmid, len, via_proxy)
 }
 
 TunnelStat.prototype.add_right_out = function(len, via_proxy) {
@@ -82,78 +80,81 @@ TunnelStat.prototype.add_right_out = function(len, via_proxy) {
 	if (via_proxy) {
 		this.right_out_via_proxy += len
 	}
-	if (this.gmid !== undefined) {
-		tcp_forward(this.gmid, this.right_out)
-		tcp_forward_via_proxy(this.gmid, this.right_out_via_proxy)
-	}
+	if (this.gmid === undefined) return
+	add_tcp_forward(this.gmid, len, via_proxy)
+}
+
+// UDP 的统计比较简单，不需要建立 TunnelStat 这样的类级抽象
+// 直接提供两个接口即可，如下
+
+function ShadowSocketStat(gmid, via_proxy) {
+
+}
+
+ShadowSocketStat.prototype.add_left_in = function(len) {
+
+}
+
+exports.udp_forward = function(header, len, via_proxy) {
+	// 没有 gmid 头的不统计
+	if (typeof header.gmid !== 'string') return
+
+	udp_forward(header.gmid, len, via_proxy)
+}
+
+exports.udp_backward = function(header, len, via_proxy) {
+	// 没有 gmid 头的不统计	
+	if (typeof header.gmid !== 'string') return
+
+	udp_backward(header.gmid, len, via_proxy)
 }
 
 exports.query_all = function() {
 	return stat_by_gmid
 }
 
-function tcp_backward(gmid, len) {
+function add_tcp_backward(gmid, len, via_proxy) {
 	if (!stat_by_gmid.hasOwnProperty(gmid)) {
 		stat_by_gmid[gmid] = new_item()
 	}
 
 	stat_by_gmid[gmid].tcp_backward += len
+	if (via_proxy) {
+		stat_by_gmid[gmid].tcp_backward_via_proxy += len
+	}
 }
 
-function tcp_forward(gmid, len) {
+function add_tcp_forward(gmid, len, via_proxy) {
 	if (!stat_by_gmid.hasOwnProperty(gmid)) {
 		stat_by_gmid[gmid] = new_item()
 	}
 
 	stat_by_gmid[gmid].tcp_forward += len
-}
-
-function tcp_backward_via_proxy(gmid, len) {
-	if (!stat_by_gmid.hasOwnProperty(gmid)) {
-		stat_by_gmid[gmid] = new_item()
+	if (via_proxy) {
+		stat_by_gmid[gmid].tcp_forward_via_proxy += len
 	}
-
-	stat_by_gmid[gmid].tcp_backward_via_proxy += len
 }
 
-function tcp_forward_via_proxy(gmid, len) {
-	if (!stat_by_gmid.hasOwnProperty(gmid)) {
-		stat_by_gmid[gmid] = new_item()
-	}
-
-	stat_by_gmid[gmid].tcp_forward_via_proxy += len
-}
-
-function udp_backward(gmid, len) {
+function add_udp_backward(gmid, len, via_proxy) {
 	if (!stat_by_gmid.hasOwnProperty(gmid)) {
 		stat_by_gmid[gmid] = new_item()
 	}
 
 	stat_by_gmid[gmid].udp_backward += len
+	if (via_proxy) {
+		stat_by_gmid[gmid].udp_backward_via_proxy += len
+	}
 }
 
-function udp_forward(gmid, len) {
+function add_udp_forward(gmid, len, via_proxy) {
 	if (!stat_by_gmid.hasOwnProperty(gmid)) {
 		stat_by_gmid[gmid] = new_item()
 	}
 
 	stat_by_gmid[gmid].udp_forward += len
-}
-
-function udp_backward_via_proxy(gmid, len) {
-	if (!stat_by_gmid.hasOwnProperty(gmid)) {
-		stat_by_gmid[gmid] = new_item()
+	if (via_proxy) {
+		stat_by_gmid[gmid].udp_forward_via_proxy += len
 	}
-
-	stat_by_gmid[gmid].udp_backward_via_proxy += len
-}
-
-function udp_forward_via_proxy(gmid, len) {
-	if (!stat_by_gmid.hasOwnProperty(gmid)) {
-		stat_by_gmid[gmid] = new_item()
-	}
-
-	stat_by_gmid[gmid].udp_forward_via_proxy += len
 }
 
 function new_item() {
