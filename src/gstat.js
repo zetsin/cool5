@@ -15,11 +15,11 @@ var stat_by_gmid = {
 }
 
 // DEBUG
-setInterval(function() {
-	var fs = require('fs')
-	fs.writeFileSync('gstat.json', JSON.stringify(stat_by_gmid, null, 4))
-	console.log('write gstat.json done')
-}, 1000)
+// setInterval(function() {
+// 	var fs = require('fs')
+// 	fs.writeFileSync('gstat.json', JSON.stringify(stat_by_gmid, null, 4))
+// 	console.log('write gstat.json done')
+// }, 1000)
 
 // TunnelStat 类是提供给 tcp_station 模块里的 Tunnel 类用的
 // Tunnel 类的实例会创建 TunnelStat 类的实例来完成统计工作
