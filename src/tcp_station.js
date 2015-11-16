@@ -4,6 +4,7 @@ var log = require('./log')
 var gpp = require('./gpp')
 var auth = require('./auth')
 var router = require('./router')
+var gstat = require('./gstat')
 
 var server = null
 var next_tunnel_id = 1
@@ -65,6 +66,8 @@ function Tunnel(left_socket, on_close_listener) {
     this.on_close = this.on_close_handler.bind(this)
     this.on_close_listener = on_close_listener
     this.parser = new gpp.HeaderParser()
+    this.header = null
+    this.stat = new gstat.TunnelStat()
     this.left_socket_data_handler = this.on_left_socket_data_parse_header // 从解析 header 开始
 
     log.info('[tcp_station] tunnel[${0}] created, tcp_no_delay=${1}', [this.id, config.get('optimize.tcp_no_delay')])
@@ -111,6 +114,9 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     var from_ip = this.left_socket.remoteAddress
     var from_port = this.left_socket.remotePort
 
+    // 流量统计
+    this.stat.add_left_in(chunk.length)
+
     // 继续吃 chunk 来解析
     parser.eat(chunk)
 
@@ -134,6 +140,10 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 头部解析完成了
     var header = parser.get_header()
     log.info('[tcp_station] tunnel[${0}] left header parsed ${1|json}', [this.id, header])
+    // 记录到当前对象上
+    this.header = header
+    // 更新 stat 对象，提醒它 header 已经解析出来了
+    this.stat.set_header(header)
     // 进行下一步之前，先进行身份认证
     var auth_result = auth.exec(header)
     if (!auth_result.ok) {
@@ -163,10 +173,15 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
             var header_chunk = gpp.array_to_header_chunk([{PV: 1}, {IP: header.ip}, {PORT: header.port}])            
         }
         this.right_socket.write(header_chunk)
+        // 流量统计
+        this.stat.add_right_out(header_chunk.length)
     }
     // 如果有尾块，要记得发送
     if (parser.exists_tail_chunk()) {
-        this.right_socket.write(parser.get_tail_chunk())
+        var tail_chunk = parser.get_tail_chunk()
+        this.right_socket.write(tail_chunk)
+        // 流量统计
+        this.stat.add_right_out(tail_chunk.length)
     }
     // 设置后续处理流程，不管 gpptcp 还是 tcp 都一样
     // 不再对数据进行处理
@@ -174,6 +189,16 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 左右开始相互 pipe
     this.left_socket.pipe(this.right_socket)
     this.right_socket.pipe(this.left_socket)
+    // 流量统计
+    var self = this
+    this.left_socket.on('data', function(chunk) {
+        self.stat.add_left_in(chunk.length)
+        self.stat.add_right_out(chunk.length)
+    })
+    this.right_socket.on('data', function(chunk) {
+        self.stat.add_right_in(chunk.length)
+        self.stat.add_left_out(chunk.length)
+    })
 }
 
 Tunnel.prototype.on_left_socket_error = function(err) {
