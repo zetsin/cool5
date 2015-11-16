@@ -67,6 +67,7 @@ function Tunnel(left_socket, on_close_listener) {
     this.on_close_listener = on_close_listener
     this.parser = new gpp.HeaderParser()
     this.header = null
+    this.via_proxy = false
     this.stat = new gstat.TunnelStat()
     this.left_socket_data_handler = this.on_left_socket_data_parse_header // 从解析 header 开始
 
@@ -166,6 +167,10 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 如果是 gpptcp 协议我们需要发个 header 过去
     // 哦，别忘了如果 auth_result 里面有 forward 的内容的话，就要作 forward
     if (r.protocol === 'gpptcp') {
+        // 凡是 gpptcp 协议的，必然是走代理，作一下标记
+        // 这个标记主要是 gstat 模块用到
+        this.via_proxy = true
+
         if (auth_result.forward) {
             var header_chunk = gpp.array_to_header_chunk([{PV: 1}, {IP: header.ip}, {PORT: header.port}, auth_result.forward])
         }
@@ -174,14 +179,14 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
         }
         this.right_socket.write(header_chunk)
         // 流量统计
-        this.stat.add_right_out(header_chunk.length)
+        this.stat.add_right_out(header_chunk.length, this.via_proxy)
     }
     // 如果有尾块，要记得发送
     if (parser.exists_tail_chunk()) {
         var tail_chunk = parser.get_tail_chunk()
         this.right_socket.write(tail_chunk)
         // 流量统计
-        this.stat.add_right_out(tail_chunk.length)
+        this.stat.add_right_out(tail_chunk.length, this.via_proxy)
     }
     // 设置后续处理流程，不管 gpptcp 还是 tcp 都一样
     // 不再对数据进行处理
@@ -193,10 +198,10 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     var self = this
     this.left_socket.on('data', function(chunk) {
         self.stat.add_left_in(chunk.length)
-        self.stat.add_right_out(chunk.length)
+        self.stat.add_right_out(chunk.length, self.via_proxy)
     })
     this.right_socket.on('data', function(chunk) {
-        self.stat.add_right_in(chunk.length)
+        self.stat.add_right_in(chunk.length, self.via_proxy)
         self.stat.add_left_out(chunk.length)
     })
 }

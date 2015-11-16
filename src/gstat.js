@@ -5,17 +5,21 @@ var stat_by_gmid = {
 	// 'gmid1': {
 	// 	tcp_forward: 0,
 	// 	tcp_backward: 0,
+	// 	tcp_forward_via_proxy: 0,
+	// 	tcp_backward_via_proxy: 0,
 	// 	udp_forward: 0,
-	// 	udp_backward: 0
+	// 	udp_backward: 0,
+	// 	udp_forward_via_proxy: 0,
+	// 	udp_backward_via_proxy: 0
 	// }
 }
 
 // DEBUG
-// setInterval(function() {
-// 	var fs = require('fs')
-// 	fs.writeFileSync('gstat.json', JSON.stringify(stat_by_gmid, null, 4))
-// 	console.log('write gstat.json done')
-// }, 1000)
+setInterval(function() {
+	var fs = require('fs')
+	fs.writeFileSync('gstat.json', JSON.stringify(stat_by_gmid, null, 4))
+	console.log('write gstat.json done')
+}, 1000)
 
 // TunnelStat 类是提供给 tcp_station 模块里的 Tunnel 类用的
 // Tunnel 类的实例会创建 TunnelStat 类的实例来完成统计工作
@@ -30,6 +34,8 @@ function TunnelStat() {
 	this.left_out = 0
 	this.right_in = 0
 	this.right_out = 0
+	this.right_in_via_proxy = 0
+	this.right_out_via_proxy = 0
 }
 
 TunnelStat.prototype.set_header = function(header) {
@@ -60,17 +66,25 @@ TunnelStat.prototype.add_left_out = function(len) {
 	this.left_out += len
 }
 
-TunnelStat.prototype.add_right_in = function(len) {
+TunnelStat.prototype.add_right_in = function(len, via_proxy) {
 	this.right_in += len
+	if (via_proxy) {
+		this.right_in_via_proxy += len
+	}
 	if (this.gmid !== undefined) {
 		tcp_backward(this.gmid, this.right_in)
+		tcp_backward_via_proxy(this.gmid, this.right_in_via_proxy)
 	}
 }
 
-TunnelStat.prototype.add_right_out = function(len) {
+TunnelStat.prototype.add_right_out = function(len, via_proxy) {
 	this.right_out += len
+	if (via_proxy) {
+		this.right_out_via_proxy += len
+	}
 	if (this.gmid !== undefined) {
 		tcp_forward(this.gmid, this.right_out)
+		tcp_forward_via_proxy(this.gmid, this.right_out_via_proxy)
 	}
 }
 
@@ -94,6 +108,22 @@ function tcp_forward(gmid, len) {
 	stat_by_gmid[gmid].tcp_forward += len
 }
 
+function tcp_backward_via_proxy(gmid, len) {
+	if (!stat_by_gmid.hasOwnProperty(gmid)) {
+		stat_by_gmid[gmid] = new_item()
+	}
+
+	stat_by_gmid[gmid].tcp_backward_via_proxy += len
+}
+
+function tcp_forward_via_proxy(gmid, len) {
+	if (!stat_by_gmid.hasOwnProperty(gmid)) {
+		stat_by_gmid[gmid] = new_item()
+	}
+
+	stat_by_gmid[gmid].tcp_forward_via_proxy += len
+}
+
 function udp_backward(gmid, len) {
 	if (!stat_by_gmid.hasOwnProperty(gmid)) {
 		stat_by_gmid[gmid] = new_item()
@@ -110,11 +140,31 @@ function udp_forward(gmid, len) {
 	stat_by_gmid[gmid].udp_forward += len
 }
 
+function udp_backward_via_proxy(gmid, len) {
+	if (!stat_by_gmid.hasOwnProperty(gmid)) {
+		stat_by_gmid[gmid] = new_item()
+	}
+
+	stat_by_gmid[gmid].udp_backward_via_proxy += len
+}
+
+function udp_forward_via_proxy(gmid, len) {
+	if (!stat_by_gmid.hasOwnProperty(gmid)) {
+		stat_by_gmid[gmid] = new_item()
+	}
+
+	stat_by_gmid[gmid].udp_forward_via_proxy += len
+}
+
 function new_item() {
 	return {
 		tcp_forward: 0,
 		tcp_backward: 0,
+		tcp_forward_via_proxy: 0,
+		tcp_backward_via_proxy: 0,
 		udp_forward: 0,
-		udp_backward: 0
+		udp_backward: 0,
+		udp_forward_via_proxy: 0,
+		udp_backward_via_proxy: 0
 	}
 }
