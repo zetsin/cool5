@@ -155,9 +155,15 @@ function SyncTarget(name, map_cb) {
 }
 
 SyncTarget.prototype.start = function() {
-	this.map_cb({
-		auth_list: ['1234567890']
-	})
+	try {
+		this.map_cb({
+			auth_verify: true,
+			user_list: [{auth: '1234567890'}]
+		})
+	}
+	catch(err) {
+		log.warning('[fsync] map function exception: ' + err.message)
+	}
 }
 
 SyncTarget.prototype.stop = function() {
