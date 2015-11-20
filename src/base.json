@@ -11,7 +11,7 @@
 	"user.auth.enabled": false,
 	"user.auth.forward": true,
 	"user.auth.fsync.url": "",
-	"log.enabled": true,
+	"log.enabled": false,
 	"log.directory": "./log",
 	"optimize.tcp_no_delay": true
 }
