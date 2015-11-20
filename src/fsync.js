@@ -36,15 +36,16 @@ if (config.get('fsync.enabled')) {
 	}
 }
 
-exports.add_target = function(name, map_cb) {
+exports.add_target = function(name, url, map_cb) {
 	assert(typeof name === 'string' && name.length > 0)
+	assert(typeof url === 'string' && url.length > 0)
 	assert(typeof map_cb === 'function' || map_cb === undefined || map_cb === null)
 
 	if (sync_target_qml.exists(name)) {
 		return false
 	}
 	else {
-		var sync_target = new SyncTarget(name, map_cb)
+		var sync_target = new SyncTarget(name, url, map_cb)
 		sync_target_qml.add(name, sync_target)
 		sync_target.start()
 		return true
@@ -142,13 +143,13 @@ QuickMapList.prototype.retrieve = function(name) {
 
 // SyncTarget Class
 
-function SyncTarget(name, map_cb) {
+function SyncTarget(name, url, map_cb) {
 	this.name = name
+	this.url = url
 	this.map_cb = map_cb || function() {}
 	this.value = null
 	this.value_mapped = null
 	// copy from global...
-	this.url = poll_url
 	this.interval = poll_interval
 	// stop hook
 	this._stop_imp = null
@@ -156,9 +157,9 @@ function SyncTarget(name, map_cb) {
 
 SyncTarget.prototype.start = function() {
 	try {
-		this.map_cb({
+		this.value_mapped = this.map_cb({
 			auth_verify: true,
-			user_list: [{auth: '1234567890'}]
+			user_list: [{auth: '42143f31d43937e01b6fdb665c31a666'}]
 		})
 	}
 	catch(err) {

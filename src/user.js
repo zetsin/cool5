@@ -2,13 +2,15 @@ var config = require('./config')
 var log = require('./log')
 var fsync = require('./fsync')
 
+var fsync_target_name = 'user'
+
 if (config.get('user.auth.enabled')) {
 	var fsync_url = config.get('user.auth.fsync.url')
 	if (!fsync_url) {
 		log.error('[user] "user.auth.fsync.url" must be provided cause "user.auth.enabled" is true')
 		process.exit(1)
 	}
-	fsync.add_target(fsync_url, fsync_map)
+	fsync.add_target(fsync_target_name, fsync_url, fsync_map)
 }
 
 function fsync_map(input) {
@@ -34,28 +36,6 @@ function fsync_map(input) {
 		})
 	}
 }
-
-// fsync.add_target('auth', function(input) {
-// 	try {
-// 		// convert input into another format
-// 		// so we can quickly check auth existence later
-// 		var output = {}
-// 		if (Array.isArray(input.auth_list)) {
-// 			input.auth_list.forEach(function(auth) {
-// 				if (typeof auth !== 'string' || auth.length < 1) {
-// 					throw new Error('invalid auth value: ' + String(auth))
-// 				}
-// 				// why prefix? for security reason, don't forget JavaScript object has
-// 				// it's own properties already
-// 				output['auth_' + auth] = true
-// 			})
-// 		}
-// 		return output
-// 	}
-// 	catch(err) {
-// 		throw new Error('invalid auth data from remote')
-// 	}
-// })
 
 // return: {ok: <boolean>, forward: <gpp-header>}
 exports.exec_auth = function(header) {
@@ -85,5 +65,12 @@ exports.exec_auth = function(header) {
 }
 
 function verify_auth(auth) {
-	return true
+	var data = fsync.get(fsync_target_name)
+	if (!data) {
+		// not synced yet? pass all temporary
+		return true
+	}
+	else {
+		return data.user_by_auth[auth] && true
+	}
 }
