@@ -71,6 +71,12 @@ function verify_auth(auth) {
 		return true
 	}
 	else {
-		return data.user_by_auth[auth] && true
+		//log.info('[user] data.auth_verify=${0}, auth=${1}, data.user_by_auth[auth]=${2}', [data.auth_verify, auth, data.user_by_auth.hasOwnProperty(auth)])
+		if (!data.auth_verify) {
+			return true
+		}
+		else {
+			return data.user_by_auth.hasOwnProperty(auth)
+		}
 	}
 }
