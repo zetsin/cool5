@@ -1,11 +1,15 @@
 var config = require('./config')
 var log = require('./log')
+var assert = require('assert')
 
-if (!config.get('fsync.enabled')) {
-	// not enabled? do nothing
-	exports.sync = function(name, change_cb) {}
-}
-else {
+// global state
+var sync_target_qml = new QuickMapList()
+
+// config parameter
+var poll_interval
+var poll_url
+
+if (config.get('fsync.enabled')) {
 	var mode = config.get('fsync.mode')
 	if (mode !== 'poll') {
 		// only poll mode is supported yet
@@ -13,17 +17,153 @@ else {
 		process.exit(1)
 	}
 
-	var poll_interval = config.get('fsync.poll.interval')
+	poll_interval = config.get('fsync.poll.interval')
 	// support: second, minute, hour
 	// eg.
 	// 15.5s
 	// 0.75m
 	// 3.2h
-	if (!/^\d+(\.\d+)[s|m|h]$/i.test(poll_interval)) {
+	if (!/^(\d+(\.\d+)?)[smh]$/i.test(poll_interval)) {
 		log.error('invalid fsync.poll_interval: ' + poll_interval)
 		process.exit(1)
 	}
+	poll_interval = parse_interval(poll_interval)
 
-	var poll_url
-	// TODO
+	poll_url = config.get('fsync.poll.url')
+	if (typeof poll_url !== 'string') {
+		log.error('invalid fsync.poll.url: ' + poll_url)
+		process.exit(1)
+	}
+}
+
+exports.add_target = function(name, map_cb) {
+	assert(typeof name === 'string' && name.length > 0)
+	assert(typeof map_cb === 'function' || map_cb === undefined || map_cb === null)
+
+	if (sync_target_qml.exists(name)) {
+		return false
+	}
+	else {
+		var sync_target = new SyncTarget(name, map_cb)
+		sync_target_qml.add(name, sync_target)
+		sync_target.start()
+		return true
+	}
+}
+
+exports.remove_target = function(name) {
+	assert(typeof name === 'string' && name.length > 0)
+	if (!sync_target_qml.exists(name)) {
+		return false
+	}
+	else {
+		var sync_target = sync_target_qml.retrieve(name)
+		sync_target.stop()
+		sync_target_qml.remove(name)
+		return true
+	}
+}
+
+exports.get = function(name) {
+	assert(typeof name === 'string' && name.length > 0)
+	var ret = null
+	if (sync_target_qml.exists(name)) {
+		ret = sync_target_qml.retrieve(name).get_value_mapped()
+	}
+	return ret
+}
+
+function parse_interval(value) {
+	var match = /^(\d+(\.\d+)?)([smh])$/i.exec(value)
+	if (!match) {
+		throw new Error('invalid interval value')
+	}
+	var num = match[1]
+	var postfix = match[3].toLowerCase()
+
+	switch(postfix) {
+		case 's':
+			return num * 1000
+		case 'm':
+			return num * 1000 * 60
+		case 'h':
+			return num * 1000 * 60 * 60
+		default:
+			throw new Error('invalid state')
+	}
+}
+
+// QuickMapList Class
+
+function QuickMapList() {
+	this.list = []
+	this.map = {}
+}
+
+QuickMapList.prototype.add = function(name, value) {
+	assert(typeof name === 'string')
+	var key = 'qm:' + name
+	var item = {
+		name: name,
+		value: value
+	}
+	this.list.push(item)
+	this.map[key] = item
+}
+
+QuickMapList.prototype.remove = function(name) {
+	assert(typeof name === 'string')
+	var key = 'qm:' + name
+	var item = this.map[key]
+	if (!item) return
+	delete this.map[key]
+	this.list = this.list.filter(function(_item) {
+		return _item !== item
+	})
+}
+
+QuickMapList.prototype.exists = function(name) {
+	assert(typeof name === 'string')
+	var key = 'qm:' + name
+	return this.map.hasOwnProperty(key)	
+}
+
+QuickMapList.prototype.retrieve = function(name) {
+	assert(typeof name === 'string')
+	var key = 'qm:' + name
+	var item = this.map[key]
+	if (!item) {
+		return undefined
+	}
+	else {
+		return item.value
+	}
+}
+
+// SyncTarget Class
+
+function SyncTarget(name, map_cb) {
+	this.name = name
+	this.map_cb = map_cb || function() {}
+	this.value = null
+	this.value_mapped = null
+	// copy from global...
+	this.url = poll_url
+	this.interval = poll_interval
+	// stop hook
+	this._stop_imp = null
+}
+
+SyncTarget.prototype.start = function() {
+	this.map_cb({
+		auth_list: ['1234567890']
+	})
+}
+
+SyncTarget.prototype.stop = function() {
+
+}
+
+SyncTarget.prototype.get_value_mapped = function() {
+	return this.value_mapped
 }

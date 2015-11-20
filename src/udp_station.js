@@ -2,7 +2,7 @@ var config = require('./config')
 var dgram = require('dgram')
 var log = require('./log')
 var gpp = require('./gpp')
-var auth = require('./auth')
+var user = require('./user')
 var router = require('./router')
 var gstat = require('./gstat')
 
@@ -42,7 +42,7 @@ exports.start = function() {
 			var message_without_header = parser.exists_tail_chunk() ? parser.get_tail_chunk() : new Buffer(0)
 			log.info('[udp_station] server message length=${0} from ip=${1}, port=${2} header parsed ${3|json}', [message.length, rinfo.address, rinfo.port, header])
 		    // 进行下一步之前，先进行身份认证
-		    var auth_result = auth.exec(header)
+		    var auth_result = user.exec_auth(header)
 		    if (!auth_result.ok) {
 		        // 身份失败，直接丢弃包
 		        log.warning('[udp_station] auth failed, drop packet immediately without any service')

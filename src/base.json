@@ -12,7 +12,7 @@
 	"fsync.poll.url": "",
 	"auth.verify": false,
 	"auth.forward": true,
-	"log.enabled": false,
+	"log.enabled": true,
 	"log.directory": "./log",
 	"optimize.tcp_no_delay": true
 }

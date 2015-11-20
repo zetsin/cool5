@@ -2,7 +2,7 @@ var config = require('./config')
 var net = require('net')
 var log = require('./log')
 var gpp = require('./gpp')
-var auth = require('./auth')
+var user = require('./user')
 var router = require('./router')
 var gstat = require('./gstat')
 
@@ -146,7 +146,7 @@ Tunnel.prototype.on_left_socket_data_parse_header = function(chunk) {
     // 更新 stat 对象，提醒它 header 已经解析出来了
     this.stat.set_header(header)
     // 进行下一步之前，先进行身份认证
-    var auth_result = auth.exec(header)
+    var auth_result = user.exec_auth(header)
     if (!auth_result.ok) {
         // 身份失败，直接断开连接
         log.warning('[tcp_station] auth failed, disconnect immediately without any service')
