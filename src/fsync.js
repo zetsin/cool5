@@ -1,6 +1,7 @@
 var config = require('./config')
 var log = require('./log')
 var assert = require('assert')
+var request = require('request')
 
 // global state
 var sync_target_qml = new QuickMapList()
@@ -9,32 +10,25 @@ var sync_target_qml = new QuickMapList()
 var poll_interval
 var poll_url
 
-if (config.get('fsync.enabled')) {
-	var mode = config.get('fsync.mode')
-	if (mode !== 'poll') {
-		// only poll mode is supported yet
-		log.error('unknown fsync.mode: ' + mode)
-		process.exit(1)
-	}
-
-	poll_interval = config.get('fsync.poll.interval')
-	// support: second, minute, hour
-	// eg.
-	// 15.5s
-	// 0.75m
-	// 3.2h
-	if (!/^(\d+(\.\d+)?)[smh]$/i.test(poll_interval)) {
-		log.error('invalid fsync.poll_interval: ' + poll_interval)
-		process.exit(1)
-	}
-	poll_interval = parse_interval(poll_interval)
-
-	poll_url = config.get('fsync.poll.url')
-	if (typeof poll_url !== 'string') {
-		log.error('invalid fsync.poll.url: ' + poll_url)
-		process.exit(1)
-	}
+var mode = config.get('fsync.mode')
+if (mode !== 'poll') {
+	// only poll mode is supported yet
+	log.error('unknown fsync.mode: ' + mode)
+	process.exit(1)
 }
+
+poll_interval = config.get('fsync.poll.interval')
+// support: second, minute, hour
+// eg.
+// 15.5s
+// 0.75m
+// 3.2h
+if (!/^(\d+(\.\d+)?)[smh]$/i.test(poll_interval)) {
+	log.error('invalid fsync.poll_interval: ' + poll_interval)
+	process.exit(1)
+}
+poll_interval = parse_interval(poll_interval)
+
 
 exports.add_target = function(name, url, map_cb) {
 	assert(typeof name === 'string' && name.length > 0)
@@ -156,19 +150,56 @@ function SyncTarget(name, url, map_cb) {
 }
 
 SyncTarget.prototype.start = function() {
-	try {
-		this.value_mapped = this.map_cb({
-			auth_verify: true,
-			user_list: [{auth: '42143f31d43937e01b6fdb665c31a666'}]
-		})
+	var self = this
+
+	if (!config.get('fsync.enabled')) {
+		// fsync is not enabled, do not fire any request
+		return
 	}
-	catch(err) {
-		log.warning('[fsync] map function exception: ' + err.message)
+
+	do_request()
+
+	function do_request() {
+		var begin_timestamp = new Date()
+		log.info('[fsync] request begin url=${0}', [self.url])
+		var handle = request.get({url: self.url, json: true}, request_done)
+
+		self._stop_imp = function() {
+			handle.abort()
+		}
+		
+		function request_done(err, ret, obj) {
+			var end_timestamp = new Date()
+			var delta = Math.max(end_timestamp - begin_timestamp, 0)
+			var rest_interval = Math.max(self.interval - delta, 0)
+
+			if (err) {
+				log.warning('[fsync] request end failed delta=${0}, rest_interval=${1}, error=${2}', [delta, rest_interval, err.message])
+			}
+			else {
+				log.info('[fsync] request end ok delta=${0}, rest_interval=${1}', [delta, rest_interval])
+				self.value = obj
+
+				try {
+					self.value_mapped = self.map_cb(obj)
+				}
+				catch(err) {
+					log.warning('[fsync] map function exception: ' + err.message)
+				}
+			}
+
+			var to = setTimeout(do_request, rest_interval)
+			self._stop_imp = function() {
+				clearTimeout(to)
+			}
+		}
 	}
 }
 
 SyncTarget.prototype.stop = function() {
-
+	if (this._stop_imp) {
+		this._stop_imp()
+	}
 }
 
 SyncTarget.prototype.get_value_mapped = function() {
