@@ -1,5 +1,6 @@
 {
 	"mode": "gpp_to_dynamic",
+	"id": "",
 	"gpp.header.max_size": "128",
 	"local.tcp.host": "0.0.0.0",
 	"local.tcp.port": "32100",
@@ -11,6 +12,10 @@
 	"user.auth.enabled": false,
 	"user.auth.forward": true,
 	"user.auth.fsync.url": "",
+	"user.auth.online_report.enabled": false,
+	"user.auth.online_report.url": "",
+	"user.auth.online_report.interval": "15s",
+	"user.auth.online_report.cache.expire": "5m",
 	"log.enabled": false,
 	"log.directory": "./log",
 	"optimize.tcp_no_delay": true
