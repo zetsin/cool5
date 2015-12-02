@@ -102,6 +102,7 @@ OnlineReporter.prototype.start = function() {
 	var self = this
 	if (!self.enabled) return
 	var request = require('request')
+	var cache_expire = parse_interval(config.get('user.auth.online_report.cache.expire'))
 
 	do_request()
 
@@ -109,9 +110,12 @@ OnlineReporter.prototype.start = function() {
 		// 记录下起始时间
 		var begin_timestamp = new Date()
 
+		// 移除超时认证
+		remove_expired_auth_cache()
+
 		var url = self.url
 		var server_id = config.get('id')
-		var user_list = make_server_list()
+		var user_list = make_user_list()
 
 		log.info('[user] online report begin server_id=${0}, user_list=${1|json}, url=${2}', [server_id, user_list, url])
 
@@ -140,7 +144,15 @@ OnlineReporter.prototype.start = function() {
 			setTimeout(do_request, rest_interval)
 		}
 
-		function make_server_list() {
+		function remove_expired_auth_cache() {
+			self.auth_cache_list = self.auth_cache_list.filter(function(item) {
+				var now = new Date()
+				var keep = (item.stamp < now) && ((now - item.stamp) < cache_expire)
+				return keep
+			})
+		}
+
+		function make_user_list() {
 			return self.auth_cache_list.map(function(item) {
 				return {
 					auth: item.auth
@@ -151,6 +163,8 @@ OnlineReporter.prototype.start = function() {
 }
 
 OnlineReporter.prototype.add_auth = function(auth) {
+
+	if (!auth) return
 
 	for (var i = 0, len = this.auth_cache_list.length; i < len; ++i) {
 		var cache_item = this.auth_cache_list[i]
